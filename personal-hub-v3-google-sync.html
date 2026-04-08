@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Personal Hub — Command Center</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root {
@@ -62,6 +61,9 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font
 /* Sidebar */
 #sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:var(--transition);overflow:hidden;}
 #sidebar.hidden{width:0;border:none;}
+
+#sidebar-backdrop{display:none;}
+#sidebar-backdrop.open{display:block;}
 .sidebar-header{padding:20px 20px 12px;border-bottom:1px solid var(--border);}
 .sidebar-section-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;color:var(--text);line-height:1.2;}
 .sidebar-section-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.15em;margin-top:2px;}
@@ -72,10 +74,18 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font
 .sidebar-search .s-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;}
 .sidebar-list{flex:1;overflow-y:auto;padding:8px 12px;}
 .sidebar-group-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.12em;padding:8px 8px 4px;text-transform:uppercase;}
-.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);position:relative;}
+.sidebar-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);position:relative;}
 .sidebar-item:hover{background:var(--gold-glow);}
 .sidebar-item.active{background:var(--gold-dim);}
 .sidebar-item .si-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.sidebar-item .si-dot{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,0.35);flex-shrink:0;}
+.sidebar-item.active .si-dot{background:var(--gold);}
+.dot-blue{background:var(--blue);}
+.dot-gold{background:var(--gold);}
+.dot-green{background:var(--green);}
+.dot-red{background:var(--red);}
+.dot-purple{background:var(--purple);}
+.dot-pink{background:var(--pink);}
 .sidebar-item .si-label{flex:1;font-size:13px;font-weight:500;color:var(--text2);}
 .sidebar-item.active .si-label{color:var(--gold);}
 .sidebar-item .si-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);background:var(--bg3);padding:1px 7px;border-radius:20px;}
@@ -104,7 +114,7 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font
 .topbar-btn.ghost:hover{border-color:var(--border2);color:var(--text);}
 
 /* Content */
-#content{flex:1;overflow-y:auto;padding:24px;}
+#content{flex:1;overflow-y:auto;padding:clamp(12px,2.2vw,32px);}
 
 /* AI Panel */
 #ai-panel{width:0;border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden;transition:var(--transition);flex-shrink:0;}
@@ -229,12 +239,13 @@ textarea.input{resize:vertical;min-height:72px;line-height:1.5;}
 
 /* Responsive */
 @media(max-width:768px){
+  #nav-menu-btn{display:flex !important;}
   #sidebar{position:fixed;top:0;left:var(--nav-w);height:100%;z-index:40;box-shadow:var(--shadow);}
-  #sidebar.hidden{transform:translateX(calc(-100% - var(--nav-w)));}
+  #sidebar.hidden{width:var(--sidebar-w);border-right:1px solid var(--border);transform:translateX(calc(-100% - var(--nav-w)));}
+  #sidebar-backdrop{position:fixed;top:0;right:0;bottom:0;left:var(--nav-w);background:rgba(0,0,0,0.38);z-index:35;}
   .dash-grid{grid-template-columns:1fr 1fr;}
   .dash-row{grid-template-columns:1fr;}
   #ai-panel.open{position:fixed;right:0;top:0;height:100%;z-index:60;box-shadow:var(--shadow);}
-  #content{padding:16px;}
   #topbar{padding:0 16px;}
   .nav-rail-item .tooltip{display:none;}
 }
@@ -244,11 +255,11 @@ textarea.input{resize:vertical;min-height:72px;line-height:1.5;}
   .nav-logo{width:36px;height:36px;border-radius:10px;font-size:16px;margin-bottom:8px;}
   .nav-rail-item{width:38px;height:38px;font-size:16px;}
   #sidebar{left:var(--nav-w);width:calc(100vw - var(--nav-w));max-width:360px;}
+  #sidebar.hidden{width:calc(100vw - var(--nav-w));max-width:360px;transform:translateX(calc(-100% - var(--nav-w)));}
   #ai-panel.open{width:100%;max-width:100vw;}
   #topbar{height:auto;padding:10px 12px;flex-wrap:wrap;gap:10px;}
   .topbar-breadcrumb{flex-basis:100%;}
   .topbar-date{display:none;}
-  #content{padding:12px;}
   .dash-grid{grid-template-columns:1fr;}
   .modal{padding:20px;width:92vw;}
   .ob-card{width:92vw;padding:24px;}
@@ -453,11 +464,14 @@ textarea.input{resize:vertical;min-height:72px;line-height:1.5;}
 </div>
 
 <!-- App -->
-<div id="app" style="display:none;width:100%;height:100%;display:none;flex;">
+<div id="app" style="display:none;width:100%;height:100%;">
 
   <!-- Nav Rail -->
   <div id="nav-rail">
     <div class="nav-logo" onclick="setSection('dashboard')" title="Personal Hub">⌘</div>
+    <div class="nav-rail-item" id="nav-menu-btn" onclick="toggleSidebar()" style="display:none">
+      ☰<span class="tooltip">Menu</span>
+    </div>
     <div class="nav-rail-item active" data-section="dashboard" onclick="setSection('dashboard')">
       🏠<span class="tooltip">Dashboard</span>
     </div>
@@ -519,6 +533,8 @@ textarea.input{resize:vertical;min-height:72px;line-height:1.5;}
       </div>
     </div>
   </div>
+
+  <div id="sidebar-backdrop"></div>
 
   <!-- Main -->
   <div id="main">
@@ -1202,6 +1218,7 @@ let AI_OPEN = false;
 let VIEW_MODE = 'list'; // list | kanban | grid
 let MODAL_MODE = null; // add | edit
 let MODAL_EDIT_ID = null;
+let MODAL_SECTION = null;
 let obStep = 1;
 let VAULT = { unlocked:false, key:null, cache:new Map() };
 
@@ -1427,6 +1444,12 @@ function init() {
   const savedDB = localStorage.getItem('phub_db');
   if (savedDB) { try { DB = JSON.parse(savedDB); } catch(e){} }
   (DB.credentials || []).forEach(c => { c.visible = false; });
+  const bd = document.getElementById('sidebar-backdrop');
+  if (bd) bd.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); });
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) openSidebar();
+    else updateSidebarBackdrop();
+  });
   if (saved) {
     USER = JSON.parse(saved);
     ensureUserDefaults();
@@ -1487,6 +1510,8 @@ function finishOnboarding() {
 function skipOnboarding() {
   document.getElementById('onboarding').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
+  if (window.innerWidth <= 768) closeSidebar();
+  else openSidebar();
   updateProfile();
   setSection('dashboard');
   // AI welcome
@@ -1529,11 +1554,31 @@ function setSection(id) {
   document.getElementById('global-search').value = '';
   renderSidebar(id);
   renderContent(id, '');
+  if (window.innerWidth <= 768) closeSidebar();
 }
 
 function toggleSidebar() {
-  SIDEBAR_OPEN = !SIDEBAR_OPEN;
-  document.getElementById('sidebar').classList.toggle('hidden', !SIDEBAR_OPEN);
+  if (SIDEBAR_OPEN) closeSidebar();
+  else openSidebar();
+}
+
+function openSidebar() {
+  SIDEBAR_OPEN = true;
+  document.getElementById('sidebar').classList.remove('hidden');
+  updateSidebarBackdrop();
+}
+
+function closeSidebar() {
+  SIDEBAR_OPEN = false;
+  document.getElementById('sidebar').classList.add('hidden');
+  updateSidebarBackdrop();
+}
+
+function updateSidebarBackdrop() {
+  const bd = document.getElementById('sidebar-backdrop');
+  if (!bd) return;
+  const show = window.innerWidth <= 768 && SIDEBAR_OPEN;
+  bd.classList.toggle('open', show);
 }
 
 function toggleAI() {
@@ -1566,112 +1611,163 @@ function getSidebarItems(section, search='') {
   const sections = {
     dashboard: () => `
       <div class="sidebar-group-label">MODUL</div>
-      ${[['work','⚡','Pekerjaan',DB.work.filter(w=>w.status!=='selesai').length],
-         ['business','💼','Bisnis',DB.business.length],
-         ['sales','🤝','Sales',DB.sales.length],
-         ['family','🏡','Keluarga',DB.family.length],
-         ['calendar','📅','Kalender',DB.calendar.filter(e=>new Date(e.date)>=new Date()).length],
-         ['contacts','👥','Kontak',DB.contacts.length],
-         ['credentials','🔐','Kredensial',DB.credentials.length],
-         ['data','📋','Data Penting',DB.data.length],
-         ['plans','🎯','Rencana',DB.plans.length],
-      ].map(([s,i,l,c])=>`
+      ${[['work','Pekerjaan',DB.work.filter(w=>w.status!=='selesai').length],
+         ['business','Bisnis',DB.business.length],
+         ['sales','Sales',DB.sales.length],
+         ['family','Keluarga',DB.family.length],
+         ['calendar','Kalender',DB.calendar.filter(e=>new Date(e.date)>=new Date()).length],
+         ['contacts','Kontak',DB.contacts.length],
+         ['credentials','Kredensial',DB.credentials.length],
+         ['data','Data Penting',DB.data.length],
+         ['plans','Rencana',DB.plans.length],
+      ].map(([s,l,c])=>`
         <div class="sidebar-item" onclick="setSection('${s}')">
-          <span class="si-icon">${i}</span>
           <span class="si-label">${l}</span>
           <span class="si-count">${c}</span>
         </div>`).join('')}`,
     work: () => `
       <div class="sidebar-group-label">STATUS</div>
-      ${[['todo','🔵','To Do'],['proses','🟡','In Progress'],['selesai','🟢','Selesai']].map(([s,i,l])=>`
-        <div class="sidebar-item" onclick="filterWork('${s}')">
-          <span class="si-icon">${i}</span>
+      <div class="sidebar-item ${!workFilter&&!workPrioFilter?'active':''}" onclick="workFilter=null;workPrioFilter=null;renderContent('work','');renderSidebar('work','');if(window.innerWidth<=768)closeSidebar();">
+        <span class="si-dot"></span>
+        <span class="si-label">Semua</span>
+        <span class="si-count">${DB.work.length}</span>
+      </div>
+      ${[['todo','dot-blue','To Do'],['proses','dot-gold','In Progress'],['selesai','dot-green','Selesai']].map(([s,cls,l])=>`
+        <div class="sidebar-item ${workFilter===s?'active':''}" onclick="filterWork('${s}')">
+          <span class="si-dot ${cls}"></span>
           <span class="si-label">${l}</span>
           <span class="si-count">${DB.work.filter(w=>w.status===s).length}</span>
         </div>`).join('')}
       <div class="sidebar-group-label">PRIORITAS</div>
-      ${[['tinggi','🔴','Tinggi'],['sedang','🟠','Sedang'],['rendah','🟢','Rendah']].map(([p,i,l])=>`
-        <div class="sidebar-item" onclick="filterWork_p('${p}')">
-          <span class="si-icon">${i}</span>
+      ${[['tinggi','dot-red','Tinggi'],['sedang','dot-gold','Sedang'],['rendah','dot-green','Rendah']].map(([p,cls,l])=>`
+        <div class="sidebar-item ${workPrioFilter===p?'active':''}" onclick="filterWork_p('${p}')">
+          <span class="si-dot ${cls}"></span>
           <span class="si-label">${l}</span>
           <span class="si-count">${DB.work.filter(w=>w.priority===p).length}</span>
         </div>`).join('')}`,
-    business: () => `
+    business: () => {
+      const cats = [...new Set((DB.business||[]).map(b=>b.category).filter(Boolean))];
+      return `
       <div class="sidebar-group-label">KATEGORI</div>
-      ${[...new Set(DB.business.map(b=>b.category))].map(cat=>`
-        <div class="sidebar-item">
-          <span class="si-icon">◆</span>
+      <div class="sidebar-item ${!businessCategoryFilter?'active':''}" onclick="filterBusinessCategory(null)">
+        <span class="si-dot"></span>
+        <span class="si-label">Semua</span>
+        <span class="si-count">${(DB.business||[]).length}</span>
+      </div>
+      ${cats.map(cat=>`
+        <div class="sidebar-item ${businessCategoryFilter===cat?'active':''}" onclick="filterBusinessCategory(${JSON.stringify(cat)})">
+          <span class="si-dot"></span>
           <span class="si-label">${cat}</span>
-          <span class="si-count">${DB.business.filter(b=>b.category===cat).length}</span>
-        </div>`).join('')}`,
+          <span class="si-count">${(DB.business||[]).filter(b=>b.category===cat).length}</span>
+        </div>`).join('')}`;
+    },
     sales: () => `
       <div class="sidebar-group-label">TAHAP</div>
+      <div class="sidebar-item ${!salesStageFilter?'active':''}" onclick="filterSalesStage(null)">
+        <span class="si-dot"></span>
+        <span class="si-label">Semua</span>
+        <span class="si-count">${(DB.sales||[]).length}</span>
+      </div>
       ${[
-        ['lead','🟦','Lead'],
-        ['qualified','🟪','Qualified'],
-        ['proposal','🟨','Proposal'],
-        ['negotiation','🟧','Negotiation'],
-        ['won','🟩','Won'],
-        ['lost','🟥','Lost'],
-      ].map(([s,i,l])=>`
-        <div class="sidebar-item" onclick="filterSalesStage('${s}')">
-          <span class="si-icon">${i}</span>
+        ['lead','dot-blue','Lead'],
+        ['qualified','dot-purple','Qualified'],
+        ['proposal','dot-gold','Proposal'],
+        ['negotiation','dot-pink','Negotiation'],
+        ['won','dot-green','Won'],
+        ['lost','dot-red','Lost'],
+      ].map(([s,cls,l])=>`
+        <div class="sidebar-item ${salesStageFilter===s?'active':''}" onclick="filterSalesStage('${s}')">
+          <span class="si-dot ${cls}"></span>
           <span class="si-label">${l}</span>
           <span class="si-count">${(DB.sales||[]).filter(d=>d.stage===s).length}</span>
         </div>`).join('')}`,
     calendar: () => `
       <div class="sidebar-group-label">TIPE</div>
-      ${[['penting','🔴','Penting'],['kerja','💼','Kerja'],['bisnis','📈','Bisnis'],['keluarga','🏡','Keluarga']].map(([t,i,l])=>`
-        <div class="sidebar-item">
-          <span class="si-icon">${i}</span>
+      <div class="sidebar-item ${!calendarTypeFilter?'active':''}" onclick="filterCalendarType(null)">
+        <span class="si-dot"></span>
+        <span class="si-label">Semua</span>
+        <span class="si-count">${(DB.calendar||[]).length}</span>
+      </div>
+      ${[['penting','dot-red','Penting'],['kerja','dot-blue','Kerja'],['bisnis','dot-purple','Bisnis'],['keluarga','dot-green','Keluarga'],['pribadi','','Pribadi']].map(([t,cls,l])=>`
+        <div class="sidebar-item ${calendarTypeFilter===t?'active':''}" onclick="filterCalendarType('${t}')">
+          <span class="si-dot ${cls}"></span>
           <span class="si-label">${l}</span>
-          <span class="si-count">${DB.calendar.filter(c=>c.type===t).length}</span>
+          <span class="si-count">${(DB.calendar||[]).filter(c=>c.type===t).length}</span>
         </div>`).join('')}`,
-    contacts: () => `
+    contacts: () => {
+      const tags = [...new Set((DB.contacts||[]).map(c=>c.tag).filter(Boolean))];
+      return `
       <div class="sidebar-group-label">KATEGORI</div>
-      ${[...new Set(DB.contacts.map(c=>c.tag))].map(tag=>`
-        <div class="sidebar-item">
-          <span class="si-icon">◎</span>
+      <div class="sidebar-item ${!contactsTagFilter?'active':''}" onclick="filterContactsTag(null)">
+        <span class="si-dot"></span>
+        <span class="si-label">Semua</span>
+        <span class="si-count">${(DB.contacts||[]).length}</span>
+      </div>
+      ${tags.map(tag=>`
+        <div class="sidebar-item ${contactsTagFilter===tag?'active':''}" onclick="filterContactsTag(${JSON.stringify(tag)})">
+          <span class="si-dot"></span>
           <span class="si-label">${tag}</span>
-          <span class="si-count">${DB.contacts.filter(c=>c.tag===tag).length}</span>
-        </div>`).join('')}`,
-    credentials: () => `
+          <span class="si-count">${(DB.contacts||[]).filter(c=>c.tag===tag).length}</span>
+        </div>`).join('')}`;
+    },
+    credentials: () => {
+      const cats = [...new Set((DB.credentials||[]).map(c=>c.category||'lainnya').filter(Boolean))];
+      return `
       <div class="sidebar-group-label">KATEGORI</div>
-      ${[...new Set(DB.credentials.map(c=>c.category||'lainnya'))].map(cat=>`
-        <div class="sidebar-item">
-          <span class="si-icon">🔑</span>
+      <div class="sidebar-item ${!credentialsCategoryFilter?'active':''}" onclick="filterCredentialsCategory(null)">
+        <span class="si-dot"></span>
+        <span class="si-label">Semua</span>
+        <span class="si-count">${(DB.credentials||[]).length}</span>
+      </div>
+      ${cats.map(cat=>`
+        <div class="sidebar-item ${credentialsCategoryFilter===cat?'active':''}" onclick="filterCredentialsCategory(${JSON.stringify(cat)})">
+          <span class="si-dot"></span>
           <span class="si-label">${cat}</span>
-          <span class="si-count">${DB.credentials.filter(c=>(c.category||'lainnya')===cat).length}</span>
-        </div>`).join('')}`,
-    data: () => `
+          <span class="si-count">${(DB.credentials||[]).filter(c=>(c.category||'lainnya')===cat).length}</span>
+        </div>`).join('')}`;
+    },
+    data: () => {
+      const cats = [...new Set((DB.data||[]).map(d=>d.category).filter(Boolean))];
+      return `
       <div class="sidebar-group-label">KATEGORI</div>
-      ${[...new Set(DB.data.map(d=>d.category))].map(cat=>`
-        <div class="sidebar-item">
-          <span class="si-icon">📁</span>
+      <div class="sidebar-item ${!dataCategoryFilter?'active':''}" onclick="filterDataCategory(null)">
+        <span class="si-dot"></span>
+        <span class="si-label">Semua</span>
+        <span class="si-count">${(DB.data||[]).length}</span>
+      </div>
+      ${cats.map(cat=>`
+        <div class="sidebar-item ${dataCategoryFilter===cat?'active':''}" onclick="filterDataCategory(${JSON.stringify(cat)})">
+          <span class="si-dot"></span>
           <span class="si-label">${cat}</span>
-          <span class="si-count">${DB.data.filter(d=>d.category===cat).length}</span>
-        </div>`).join('')}`,
+          <span class="si-count">${(DB.data||[]).filter(d=>d.category===cat).length}</span>
+        </div>`).join('')}`;
+    },
     plans: () => `
       <div class="sidebar-group-label">STATUS</div>
-      ${[['aktif','🟢','Aktif'],['riset','🔵','Riset'],['planning','🟡','Planning'],['selesai','⚪','Selesai']].map(([s,i,l])=>`
-        <div class="sidebar-item">
-          <span class="si-icon">${i}</span>
+      <div class="sidebar-item ${!plansStatusFilter?'active':''}" onclick="filterPlansStatus(null)">
+        <span class="si-dot"></span>
+        <span class="si-label">Semua</span>
+        <span class="si-count">${(DB.plans||[]).length}</span>
+      </div>
+      ${[['aktif','dot-green','Aktif'],['riset','dot-blue','Riset'],['planning','dot-gold','Planning'],['selesai','','Selesai']].map(([s,cls,l])=>`
+        <div class="sidebar-item ${plansStatusFilter===s?'active':''}" onclick="filterPlansStatus('${s}')">
+          <span class="si-dot ${cls}"></span>
           <span class="si-label">${l}</span>
-          <span class="si-count">${DB.plans.filter(p=>p.status===s).length}</span>
+          <span class="si-count">${(DB.plans||[]).filter(p=>p.status===s).length}</span>
         </div>`).join('')}`,
     family: () => `
       <div class="sidebar-group-label">RELASI</div>
       ${DB.family.map(f=>`
         <div class="sidebar-item">
-          <span class="si-icon">👤</span>
+          <span class="si-dot"></span>
           <span class="si-label">${f.name}</span>
           <span class="si-count" style="font-size:10px;color:var(--text3)">${f.role}</span>
         </div>`).join('')}`,
     settings: () => `
       <div class="sidebar-group-label">PENGATURAN</div>
-      ${[['Profil','👤'],['Tema','🎨'],['Notifikasi','🔔'],['Data & Privasi','🔒'],['Tentang','ℹ']].map(([l,i])=>`
+      ${['Profil','Tema','Notifikasi','Data & Privasi','Tentang'].map(l=>`
         <div class="sidebar-item">
-          <span class="si-icon">${i}</span>
+          <span class="si-dot"></span>
           <span class="si-label">${l}</span>
         </div>`).join('')}`,
   };
@@ -1679,11 +1775,29 @@ function getSidebarItems(section, search='') {
 }
 
 let workFilter = null, workPrioFilter = null;
-function filterWork(status) { workFilter = status; workPrioFilter = null; renderContent('work',''); }
-function filterWork_p(prio) { workPrioFilter = prio; workFilter = null; renderContent('work',''); }
+function filterWork(status) { workFilter = status; workPrioFilter = null; renderContent('work',''); renderSidebar('work',''); if (window.innerWidth <= 768) closeSidebar(); }
+function filterWork_p(prio) { workPrioFilter = prio; workFilter = null; renderContent('work',''); renderSidebar('work',''); if (window.innerWidth <= 768) closeSidebar(); }
 
 let salesStageFilter = null;
-function filterSalesStage(stage) { salesStageFilter = stage; renderContent('sales',''); }
+function filterSalesStage(stage) { salesStageFilter = stage; renderContent('sales',''); renderSidebar('sales',''); if (window.innerWidth <= 768) closeSidebar(); }
+
+let businessCategoryFilter = null;
+function filterBusinessCategory(cat) { businessCategoryFilter = cat || null; renderContent('business',''); renderSidebar('business',''); if (window.innerWidth <= 768) closeSidebar(); }
+
+let calendarTypeFilter = null;
+function filterCalendarType(t) { calendarTypeFilter = t || null; renderContent('calendar',''); renderSidebar('calendar',''); if (window.innerWidth <= 768) closeSidebar(); }
+
+let contactsTagFilter = null;
+function filterContactsTag(tag) { contactsTagFilter = tag || null; renderContent('contacts',''); renderSidebar('contacts',''); if (window.innerWidth <= 768) closeSidebar(); }
+
+let credentialsCategoryFilter = null;
+function filterCredentialsCategory(cat) { credentialsCategoryFilter = cat || null; renderContent('credentials',''); renderSidebar('credentials',''); if (window.innerWidth <= 768) closeSidebar(); }
+
+let dataCategoryFilter = null;
+function filterDataCategory(cat) { dataCategoryFilter = cat || null; renderContent('data',''); renderSidebar('data',''); if (window.innerWidth <= 768) closeSidebar(); }
+
+let plansStatusFilter = null;
+function filterPlansStatus(s) { plansStatusFilter = s || null; renderContent('plans',''); renderSidebar('plans',''); if (window.innerWidth <= 768) closeSidebar(); }
 
 // ===== CONTENT RENDERERS =====
 function renderContent(section, search='') {
@@ -1732,7 +1846,7 @@ function renderDashboard() {
   });
 
   return `
-<div style="max-width:1200px">
+<div style="max-width:1400px;width:100%">
   <!-- Greeting -->
   <div style="margin-bottom:24px">
     <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:400;color:var(--text)">${greeting}, <span style="color:var(--gold)">${USER.name}</span> ✦</div>
@@ -1885,7 +1999,7 @@ function renderWork(search='') {
   const today = new Date(); today.setHours(0,0,0,0);
 
   return `
-<div style="max-width:900px">
+<div style="max-width:1200px;width:100%">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
     <div style="font-family:'Playfair Display',serif;font-size:24px">Manajemen Pekerjaan</div>
     <div style="display:flex;gap:6px">
@@ -1931,7 +2045,7 @@ function renderWorkKanban(items) {
     {status:'proses',label:'In Progress',color:'var(--gold)',items:items.filter(w=>w.status==='proses')},
     {status:'selesai',label:'Selesai',color:'var(--green)',items:items.filter(w=>w.status==='selesai')},
   ];
-  return `<div style="max-width:900px">
+  return `<div style="max-width:1200px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Kanban Board</div>
     <div class="kanban">
       ${cols.map(col=>`
@@ -1956,9 +2070,11 @@ function renderWorkKanban(items) {
 
 // ===== BUSINESS =====
 function renderBusiness(search='') {
-  const items = DB.business.filter(b=>!search||b.title.toLowerCase().includes(search)||b.category?.toLowerCase().includes(search));
+  let items = DB.business;
+  if (businessCategoryFilter) items = items.filter(b => b.category === businessCategoryFilter);
+  if (search) items = items.filter(b=>b.title.toLowerCase().includes(search)||b.category?.toLowerCase().includes(search));
   const statusColors = {aktif:'b-green',pipeline:'b-blue',planning:'b-gold',selesai:'b-gray'};
-  return `<div style="max-width:900px">
+  return `<div style="max-width:1200px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Agenda Bisnis</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="stagger">
     ${items.map(item=>`
@@ -2042,7 +2158,7 @@ function renderSales(search='') {
     .filter(Boolean)
     .slice(0, 6);
 
-  return `<div style="max-width:1000px">
+  return `<div style="max-width:1300px;width:100%">
     <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">
       <div>
         <div style="font-family:'Playfair Display',serif;font-size:24px">Sales Pipeline</div>
@@ -2171,7 +2287,7 @@ function renderSalesKanban(items, stages, fmt) {
     badge,
     items: items.filter(d => d.stage === stage),
   }));
-  return `<div style="max-width:1100px">
+  return `<div style="max-width:1400px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Kanban Sales</div>
     <div class="kanban">
       ${cols.map(col=>`
@@ -2203,7 +2319,7 @@ function renderSalesKanban(items, stages, fmt) {
 function renderFamily(search='') {
   const items = DB.family.filter(f=>!search||f.name.toLowerCase().includes(search)||f.role?.toLowerCase().includes(search));
   const relColors = {pasangan:'b-pink',anak:'b-blue','orang tua':'b-purple',saudara:'b-green',lainnya:'b-gray'};
-  return `<div style="max-width:900px">
+  return `<div style="max-width:1200px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Data Keluarga</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px" class="stagger">
     ${items.map(item=>{
@@ -2242,12 +2358,15 @@ function renderFamily(search='') {
 // ===== CALENDAR =====
 function renderCalendar(search='') {
   const today = new Date(); today.setHours(0,0,0,0);
-  const items = [...DB.calendar].filter(e=>!search||e.title.toLowerCase().includes(search)).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  let items = [...DB.calendar];
+  if (calendarTypeFilter) items = items.filter(e => e.type === calendarTypeFilter);
+  if (search) items = items.filter(e=>e.title.toLowerCase().includes(search));
+  items = items.sort((a,b)=>new Date(a.date)-new Date(b.date));
   const upcoming = items.filter(e=>new Date(e.date)>=today);
   const past = items.filter(e=>new Date(e.date)<today);
   const typeColors = {penting:'b-red',kerja:'b-blue',bisnis:'b-purple',keluarga:'b-pink',pribadi:'b-gray'};
 
-  return `<div style="max-width:900px">
+  return `<div style="max-width:1200px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Kalender & Jadwal</div>
     <div style="font-family:'Playfair Display',serif;font-size:17px;color:var(--gold);margin-bottom:12px">Mendatang</div>
     <div class="stagger">
@@ -2303,7 +2422,9 @@ function renderCalendar(search='') {
 // ===== CONTACTS =====
 function renderContacts(search='') {
   const q = (search || '').toLowerCase();
-  const items = DB.contacts.filter(c=>{
+  let items = DB.contacts;
+  if (contactsTagFilter) items = items.filter(c => c.tag === contactsTagFilter);
+  items = items.filter(c=>{
     if (!q) return true;
     const hay = [
       c.name, c.company, c.tag, c.role,
@@ -2313,7 +2434,7 @@ function renderContacts(search='') {
   });
   const tagColors = {bisnis:'b-blue',investor:'b-gold',kesehatan:'b-green',hukum:'b-purple',pribadi:'b-pink'};
   const gradients = ['linear-gradient(135deg,#4A9EE8,#7B61FF)','linear-gradient(135deg,#D4A853,#9B6E2A)','linear-gradient(135deg,#52C98F,#4A9EE8)','linear-gradient(135deg,#E87AAA,#9B7FE8)','linear-gradient(135deg,#E85A4A,#D4A853)'];
-  return `<div style="max-width:900px">
+  return `<div style="max-width:1200px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Orang Penting</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px" class="stagger">
     ${items.map((item,i)=>{
@@ -2356,9 +2477,11 @@ function renderContacts(search='') {
 
 // ===== CREDENTIALS =====
 function renderCredentials(search='') {
-  const items = DB.credentials.filter(c=>!search||c.service.toLowerCase().includes(search)||c.category?.toLowerCase().includes(search));
+  let items = DB.credentials;
+  if (credentialsCategoryFilter) items = items.filter(c => (c.category || 'lainnya') === credentialsCategoryFilter);
+  if (search) items = items.filter(c=>c.service.toLowerCase().includes(search)||c.category?.toLowerCase().includes(search));
   const catColors = {email:'b-blue',keuangan:'b-gold',sosial:'b-pink',server:'b-red',lainnya:'b-gray'};
-  return `<div style="max-width:800px">
+  return `<div style="max-width:1100px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:12px">Password Manager</div>
     <div style="background:var(--red-dim);border:1px solid rgba(232,90,74,0.2);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--red);display:flex;gap:8px;align-items:center">
       <span style="font-size:16px">🔒</span>
@@ -2424,10 +2547,12 @@ async function copyCredById(id) {
 
 // ===== DATA =====
 function renderData(search='') {
-  const items = DB.data.filter(d=>!search||d.title.toLowerCase().includes(search)||d.category?.toLowerCase().includes(search));
+  let items = DB.data;
+  if (dataCategoryFilter) items = items.filter(d => d.category === dataCategoryFilter);
+  if (search) items = items.filter(d=>d.title.toLowerCase().includes(search)||d.category?.toLowerCase().includes(search));
   const cats = [...new Set(items.map(d=>d.category))];
   const catIcons = {Identitas:'🪪',Pajak:'🏛',Keuangan:'💳',Asuransi:'🛡',Kendaraan:'🚗',Properti:'🏠',Lainnya:'📄'};
-  return `<div style="max-width:900px">
+  return `<div style="max-width:1200px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Data Penting</div>
     ${cats.map(cat=>`
       <div style="margin-bottom:20px">
@@ -2451,10 +2576,12 @@ function renderData(search='') {
 
 // ===== PLANS =====
 function renderPlans(search='') {
-  const items = DB.plans.filter(p=>!search||p.title.toLowerCase().includes(search));
+  let items = DB.plans;
+  if (plansStatusFilter) items = items.filter(p => p.status === plansStatusFilter);
+  if (search) items = items.filter(p=>p.title.toLowerCase().includes(search));
   const statusConfig = {aktif:{color:'var(--green)',badge:'b-green'},riset:{color:'var(--blue)',badge:'b-blue'},planning:{color:'var(--gold)',badge:'b-gold'},selesai:{color:'var(--text3)',badge:'b-gray'}};
   const prioColors = {tinggi:'var(--red)',sedang:'var(--gold)',rendah:'var(--green)'};
-  return `<div style="max-width:900px">
+  return `<div style="max-width:1200px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Rencana Pengembangan</div>
     <div class="stagger">
     ${items.map(item=>{
@@ -2495,7 +2622,7 @@ function renderPlans(search='') {
 function renderNotes(search='') {
   const items = DB.notes.filter(n=>!search||n.title.toLowerCase().includes(search));
   const colorMap = {gold:'var(--gold)',blue:'var(--blue)',green:'var(--green)',purple:'var(--purple)',red:'var(--red)'};
-  return `<div style="max-width:900px">
+  return `<div style="max-width:1200px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Catatan Cepat</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px" class="stagger">
     ${items.map(item=>`
@@ -2525,7 +2652,16 @@ function renderSettings() {
     x: socialUrl('x', l.x),
     whatsapp: socialUrl('whatsapp', l.whatsapp),
   };
-  return `<div style="max-width:700px">
+  const quick = [
+    ['website','Website',links.website],
+    ['whatsapp','WhatsApp',links.whatsapp],
+    ['instagram','Instagram',links.instagram],
+    ['linkedin','LinkedIn',links.linkedin],
+    ['youtube','YouTube',links.youtube],
+    ['tiktok','TikTok',links.tiktok],
+    ['x','X',links.x],
+  ].filter(x => x[2]);
+  return `<div style="max-width:900px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:24px">Pengaturan & Profil</div>
     <div class="card" style="margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:16px">PROFIL ANDA</div>
@@ -2551,14 +2687,25 @@ function renderSettings() {
         <div class="input-group"><label class="input-label">TIKTOK / X</label><input class="input" id="set-tiktok" value="${escapeHtml(l.tiktok||'')}" placeholder="tiktok: @... atau url"><div style="height:10px"></div><input class="input" id="set-x" value="${escapeHtml(l.x||'')}" placeholder="x: @... atau url"></div>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-        ${links.website?`<a class="btn btn-ghost" href="${escapeHtml(links.website)}" target="_blank" rel="noopener">🌐 Website</a>`:''}
-        ${links.whatsapp?`<a class="btn btn-ghost" href="${escapeHtml(links.whatsapp)}" target="_blank" rel="noopener">💬 WhatsApp</a>`:''}
-        ${links.instagram?`<a class="btn btn-ghost" href="${escapeHtml(links.instagram)}" target="_blank" rel="noopener">📸 Instagram</a>`:''}
-        ${links.linkedin?`<a class="btn btn-ghost" href="${escapeHtml(links.linkedin)}" target="_blank" rel="noopener">💼 LinkedIn</a>`:''}
-        ${links.youtube?`<a class="btn btn-ghost" href="${escapeHtml(links.youtube)}" target="_blank" rel="noopener">▶ YouTube</a>`:''}
-        ${links.tiktok?`<a class="btn btn-ghost" href="${escapeHtml(links.tiktok)}" target="_blank" rel="noopener">🎵 TikTok</a>`:''}
-        ${links.x?`<a class="btn btn-ghost" href="${escapeHtml(links.x)}" target="_blank" rel="noopener">𝕏 X</a>`:''}
+        ${links.website?`<a class="btn btn-ghost" href="${escapeHtml(links.website)}" target="_blank" rel="noopener">Website</a>`:''}
+        ${links.whatsapp?`<a class="btn btn-ghost" href="${escapeHtml(links.whatsapp)}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+        ${links.instagram?`<a class="btn btn-ghost" href="${escapeHtml(links.instagram)}" target="_blank" rel="noopener">Instagram</a>`:''}
+        ${links.linkedin?`<a class="btn btn-ghost" href="${escapeHtml(links.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>`:''}
+        ${links.youtube?`<a class="btn btn-ghost" href="${escapeHtml(links.youtube)}" target="_blank" rel="noopener">YouTube</a>`:''}
+        ${links.tiktok?`<a class="btn btn-ghost" href="${escapeHtml(links.tiktok)}" target="_blank" rel="noopener">TikTok</a>`:''}
+        ${links.x?`<a class="btn btn-ghost" href="${escapeHtml(links.x)}" target="_blank" rel="noopener">X</a>`:''}
       </div>
+      ${quick.length?`
+        <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.12em;margin-bottom:8px;text-transform:uppercase">Aksi Cepat</div>
+          <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center">
+            ${quick.map(([k,label])=>`
+              <div style="font-size:12px;color:var(--text2)">${label}</div>
+              <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="quickAddCredential('${k}')">Simpan Login</button>
+              <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="quickAddWork('${k}')">Buat Tugas</button>
+            `).join('')}
+          </div>
+        </div>`:''}
       <button class="btn btn-primary" style="margin-top:12px" onclick="saveSettings()">Simpan Koneksi</button>
     </div>
     <div class="card" style="margin-bottom:16px">
@@ -2632,6 +2779,44 @@ function socialUrl(kind, raw) {
   }
   return normalizeUrl(s0);
 }
+
+function quickAddCredential(kind) {
+  ensureUserDefaults();
+  const l = USER.links || {};
+  const raw = String(l[kind] || '').trim();
+  const link = (kind === 'website') ? normalizeUrl(raw) : socialUrl(kind, raw);
+  const label = {website:'Website',whatsapp:'WhatsApp',instagram:'Instagram',linkedin:'LinkedIn',youtube:'YouTube',tiktok:'TikTok',x:'X'}[kind] || kind;
+  const category = (kind === 'website') ? 'lainnya' : 'sosial';
+  let username = '';
+  if (raw && !/^https?:\/\//i.test(raw)) {
+    if (['instagram','x','tiktok'].includes(kind)) username = raw.replace(/^@/,'').trim();
+    else if (kind === 'whatsapp') username = raw;
+    else username = raw;
+  }
+  const notes = link ? `URL: ${link}` : '';
+  openAddModalFor('credentials', { service: label, category, username, notes });
+}
+
+function quickAddWork(kind) {
+  ensureUserDefaults();
+  const l = USER.links || {};
+  const raw = String(l[kind] || '').trim();
+  const link = (kind === 'website') ? normalizeUrl(raw) : socialUrl(kind, raw);
+  const today = new Date().toISOString().split('T')[0];
+  const title = {
+    website: 'Update website',
+    whatsapp: 'Follow up via WhatsApp',
+    instagram: 'Cek DM & komentar Instagram',
+    linkedin: 'Posting / update LinkedIn',
+    youtube: 'Upload / update YouTube',
+    tiktok: 'Posting TikTok',
+    x: 'Posting X',
+  }[kind] || 'Aktivitas online';
+  const tags = kind ? kind : '';
+  const notes = link ? `Link: ${link}` : '';
+  openAddModalFor('work', { title, priority:'sedang', status:'todo', due: today, tags, notes });
+}
+
 function exportData() {
   const blob = new Blob([JSON.stringify({USER,DB},null,2)],{type:'application/json'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -2909,16 +3094,29 @@ const SECTION_LABELS = {
 };
 
 function openAddModal() {
+  MODAL_SECTION = ACTIVE;
   MODAL_MODE = 'add'; MODAL_EDIT_ID = null;
-  const fields = FORM_FIELDS[ACTIVE]||[];
-  document.getElementById('modal-title').textContent = `Tambah ${SECTION_LABELS[ACTIVE]}`;
+  const fields = FORM_FIELDS[MODAL_SECTION]||[];
+  document.getElementById('modal-title').textContent = `Tambah ${SECTION_LABELS[MODAL_SECTION]}`;
   document.getElementById('modal-sub').textContent = 'ISI FORM DI BAWAH';
   document.getElementById('modal-save-btn').textContent = 'Simpan';
   document.getElementById('modal-body').innerHTML = renderFormFields(fields, {});
   document.getElementById('modal').classList.add('open');
 }
 
+function openAddModalFor(section, preset={}) {
+  MODAL_SECTION = section;
+  MODAL_MODE = 'add'; MODAL_EDIT_ID = null;
+  const fields = FORM_FIELDS[section]||[];
+  document.getElementById('modal-title').textContent = `Tambah ${SECTION_LABELS[section] || section}`;
+  document.getElementById('modal-sub').textContent = 'ISI FORM DI BAWAH';
+  document.getElementById('modal-save-btn').textContent = 'Simpan';
+  document.getElementById('modal-body').innerHTML = renderFormFields(fields, preset || {});
+  document.getElementById('modal').classList.add('open');
+}
+
 function editItem(section, id) {
+  MODAL_SECTION = section;
   MODAL_MODE = 'edit'; MODAL_EDIT_ID = id;
   const item = DB[section]?.find(x=>x.id===id);
   if(!item) return;
@@ -2959,7 +3157,7 @@ function renderFormFields(fields, data={}) {
 }
 
 async function saveModal() {
-  const section = ACTIVE;
+  const section = MODAL_SECTION || ACTIVE;
   const fields = FORM_FIELDS[section]||[];
   const item = {};
   let valid = true;
@@ -3014,10 +3212,12 @@ async function saveModal() {
     });
     showToast('Data berhasil diperbarui!','success');
   }
-  saveDB(); closeModal(); renderContent(section,''); renderSidebar(section,'');
+  saveDB(); closeModal();
+  if (ACTIVE === section) { renderContent(section,''); renderSidebar(section,''); }
+  else { renderContent(ACTIVE,''); renderSidebar(ACTIVE,''); }
 }
 
-function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function closeModal() { MODAL_SECTION = null; document.getElementById('modal').classList.remove('open'); }
 document.getElementById('modal').addEventListener('click', e => { if(e.target===document.getElementById('modal')) closeModal(); });
 
 // ===== DELETE =====
