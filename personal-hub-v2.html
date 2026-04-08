@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Personal Hub — Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@300;400;500&family=Nunito:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080B12;
+  --bg2: #0E1420;
+  --bg3: #131927;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --gold: #D4A853;
+  --gold2: #E8C47A;
+  --gold-dim: rgba(212,168,83,0.15);
+  --gold-glow: rgba(212,168,83,0.08);
+  --blue: #4A9EE8;
+  --blue-dim: rgba(74,158,232,0.12);
+  --green: #52C98F;
+  --green-dim: rgba(82,201,143,0.12);
+  --red: #E85A4A;
+  --red-dim: rgba(232,90,74,0.12);
+  --purple: #9B7FE8;
+  --purple-dim: rgba(155,127,232,0.12);
+  --pink: #E87AAA;
+  --pink-dim: rgba(232,122,170,0.12);
+  --text: #F0EDE8;
+  --text2: #9DA8B8;
+  --text3: #5A6478;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-gold: 0 0 30px rgba(212,168,83,0.12);
+  --nav-w: 68px;
+  --sidebar-w: 260px;
+  --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font-size:14px;display:flex;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+
+/* Nav Rail */
+#nav-rail{width:var(--nav-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:4px;z-index:50;flex-shrink:0;}
+.nav-logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--gold),#9B6E2A);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px;cursor:pointer;position:relative;box-shadow:0 0 20px rgba(212,168,83,0.3);}
+.nav-rail-item{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:var(--transition);position:relative;font-size:18px;color:var(--text3);}
+.nav-rail-item:hover{background:var(--gold-glow);color:var(--gold);}
+.nav-rail-item.active{background:var(--gold-dim);color:var(--gold);}
+.nav-rail-item.active::before{content:'';position:absolute;left:-1px;top:50%;transform:translateY(-50%);width:3px;height:24px;background:var(--gold);border-radius:0 3px 3px 0;}
+.nav-rail-item .tooltip{position:absolute;left:calc(100% + 12px);background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:5px 10px;border-radius:6px;font-size:11px;font-family:'JetBrains Mono',monospace;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.15s;z-index:100;}
+.nav-rail-item:hover .tooltip{opacity:1;}
+.nav-spacer{flex:1;}
+.nav-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;cursor:pointer;border:2px solid var(--border2);}
+
+/* Sidebar */
+#sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:var(--transition);overflow:hidden;}
+#sidebar.hidden{width:0;border:none;}
+.sidebar-header{padding:20px 20px 12px;border-bottom:1px solid var(--border);}
+.sidebar-section-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;color:var(--text);line-height:1.2;}
+.sidebar-section-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.15em;margin-top:2px;}
+.sidebar-search{margin:12px 16px;position:relative;}
+.sidebar-search input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px 9px 34px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;outline:none;transition:var(--transition);}
+.sidebar-search input:focus{border-color:var(--gold);background:var(--bg);}
+.sidebar-search input::placeholder{color:var(--text3);}
+.sidebar-search .s-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;}
+.sidebar-list{flex:1;overflow-y:auto;padding:8px 12px;}
+.sidebar-group-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.12em;padding:8px 8px 4px;text-transform:uppercase;}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);position:relative;}
+.sidebar-item:hover{background:var(--gold-glow);}
+.sidebar-item.active{background:var(--gold-dim);}
+.sidebar-item .si-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.sidebar-item .si-label{flex:1;font-size:13px;font-weight:500;color:var(--text2);}
+.sidebar-item.active .si-label{color:var(--gold);}
+.sidebar-item .si-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);background:var(--bg3);padding:1px 7px;border-radius:20px;}
+.sidebar-item.active .si-count{background:var(--gold-dim);color:var(--gold);}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);}
+.profile-mini{display:flex;align-items:center;gap:10px;padding:8px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);}
+.profile-mini:hover{background:var(--bg3);}
+.pm-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--blue));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;}
+.pm-name{font-size:13px;font-weight:600;color:var(--text);}
+.pm-role{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+
+/* Main */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+#topbar{height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;background:var(--bg2);flex-shrink:0;}
+.topbar-toggle{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);transition:var(--transition);font-size:16px;}
+.topbar-toggle:hover{background:var(--bg3);color:var(--text);}
+.topbar-breadcrumb{flex:1;display:flex;align-items:center;gap:6px;}
+.tb-section{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);}
+.tb-sep{color:var(--text3);font-size:12px;}
+.tb-current{font-size:14px;font-weight:600;color:var(--text);}
+.topbar-date{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-right:8px;}
+.topbar-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;transition:var(--transition);}
+.topbar-btn.primary{background:var(--gold);color:#000;}
+.topbar-btn.primary:hover{background:var(--gold2);}
+.topbar-btn.ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+.topbar-btn.ghost:hover{border-color:var(--border2);color:var(--text);}
+
+/* Content */
+#content{flex:1;overflow-y:auto;padding:24px;}
+
+/* AI Panel */
+#ai-panel{width:0;border-left:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column;overflow:hidden;transition:var(--transition);flex-shrink:0;}
+#ai-panel.open{width:340px;}
+.ai-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.ai-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--gold);}
+.ai-subtitle{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.1em;}
+.ai-close{cursor:pointer;color:var(--text3);font-size:16px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;transition:var(--transition);}
+.ai-close:hover{background:var(--bg3);color:var(--text);}
+.ai-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+.ai-msg{padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.6;animation:msgIn 0.3s ease;}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.ai-msg.user{background:var(--gold-dim);border:1px solid rgba(212,168,83,0.2);color:var(--text);align-self:flex-end;max-width:85%;}
+.ai-msg.assistant{background:var(--bg3);border:1px solid var(--border);color:var(--text2);align-self:flex-start;max-width:95%;}
+.ai-msg.assistant .ai-badge{display:inline-flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.08em;margin-bottom:6px;}
+.ai-typing{display:flex;gap:4px;padding:14px;}
+.ai-typing span{width:6px;height:6px;border-radius:50%;background:var(--text3);animation:typing 1.2s infinite;}
+.ai-typing span:nth-child(2){animation-delay:0.2s;}
+.ai-typing span:nth-child(3){animation-delay:0.4s;}
+@keyframes typing{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.ai-quick-prompts{padding:0 12px 12px;display:flex;flex-direction:column;gap:6px;}
+.ai-quick-btn{padding:8px 12px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer;transition:var(--transition);text-align:left;font-family:'Nunito',sans-serif;}
+.ai-quick-btn:hover{border-color:var(--gold);color:var(--gold);}
+.ai-input-area{padding:12px;border-top:1px solid var(--border);}
+.ai-input-row{display:flex;gap:8px;align-items:flex-end;}
+.ai-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;outline:none;resize:none;max-height:100px;min-height:38px;transition:var(--transition);}
+.ai-input:focus{border-color:var(--gold);}
+.ai-send{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--gold);border:none;color:#000;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:var(--transition);flex-shrink:0;}
+.ai-send:hover{background:var(--gold2);}
+
+/* Cards */
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:var(--transition);}
+.card:hover{border-color:var(--border2);}
+.card-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:400;color:var(--text);margin-bottom:4px;}
+.card-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.08em;}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:500;letter-spacing:0.04em;}
+.b-gold{background:var(--gold-dim);color:var(--gold);}
+.b-blue{background:var(--blue-dim);color:var(--blue);}
+.b-green{background:var(--green-dim);color:var(--green);}
+.b-red{background:var(--red-dim);color:var(--red);}
+.b-purple{background:var(--purple-dim);color:var(--purple);}
+.b-pink{background:var(--pink-dim);color:var(--pink);}
+.b-gray{background:rgba(90,100,120,0.2);color:var(--text3);}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.02em;transition:var(--transition);}
+.btn-primary{background:var(--gold);color:#000;}
+.btn-primary:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(212,168,83,0.3);}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--border2);color:var(--text);background:var(--bg3);}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(232,90,74,0.2);}
+.btn-danger:hover{background:rgba(232,90,74,0.2);}
+.btn-icon{width:30px;height:30px;padding:0;border-radius:7px;justify-content:center;font-size:14px;}
+
+/* Input */
+.input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;outline:none;transition:var(--transition);}
+.input:focus{border-color:var(--gold);}
+.input::placeholder{color:var(--text3);}
+select.input{cursor:pointer;appearance:none;}
+textarea.input{resize:vertical;min-height:72px;line-height:1.5;}
+.input-group{margin-bottom:14px;}
+.input-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.1em;margin-bottom:5px;display:block;}
+
+/* Items */
+.item-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:8px;transition:var(--transition);position:relative;display:flex;align-items:flex-start;gap:12px;}
+.item-card:hover{border-color:var(--border2);transform:translateX(2px);}
+.item-actions{display:flex;gap:6px;opacity:0;transition:opacity 0.2s;}
+.item-card:hover .item-actions{opacity:1;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px);animation:fadeIn 0.2s;}
+.modal-overlay.open{display:flex;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:28px;width:500px;max-width:95vw;max-height:85vh;overflow-y:auto;animation:modalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:400;margin-bottom:4px;}
+.modal-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.1em;margin-bottom:22px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;right:24px;z-index:500;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast-item{padding:12px 18px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;display:flex;align-items:center;gap:8px;animation:toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:all;}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.toast-success{background:var(--green-dim);border:1px solid rgba(82,201,143,0.3);color:var(--green);}
+.toast-error{background:var(--red-dim);border:1px solid rgba(232,90,74,0.3);color:var(--red);}
+.toast-info{background:var(--blue-dim);border:1px solid rgba(74,158,232,0.3);color:var(--blue);}
+
+/* Dashboard */
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;cursor:pointer;transition:var(--transition);position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;right:-10px;bottom:-10px;width:60px;height:60px;border-radius:50%;opacity:0.08;}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow);}
+.stat-card .sc-icon{font-size:22px;margin-bottom:10px;}
+.stat-card .sc-val{font-family:'Playfair Display',serif;font-size:34px;font-weight:600;line-height:1;}
+.stat-card .sc-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:0.08em;margin-top:6px;}
+.stat-card .sc-trend{font-size:11px;margin-top:6px;font-weight:500;}
+
+.dash-row{display:grid;grid-template-columns:1.2fr 0.8fr;gap:16px;margin-bottom:20px;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.section-heading{font-family:'Playfair Display',serif;font-size:16px;font-weight:400;}
+
+/* Progress bar */
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.6s cubic-bezier(0.4,0,0.2,1);}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px;}
+.tab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;color:var(--text3);transition:var(--transition);}
+.tab.active{background:var(--bg3);color:var(--text);border:1px solid var(--border);}
+
+/* Onboarding */
+#onboarding{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+.ob-logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--gold),#9B6E2A);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 0 40px rgba(212,168,83,0.3);margin-bottom:24px;}
+.ob-card{width:420px;background:var(--bg2);border:1px solid var(--border2);border-radius:20px;padding:36px;}
+.ob-step{display:none;animation:fadeIn 0.3s ease;}
+.ob-step.active{display:block;}
+.ob-title{font-family:'Playfair Display',serif;font-size:26px;margin-bottom:6px;}
+.ob-sub{color:var(--text3);font-size:13px;margin-bottom:24px;line-height:1.6;}
+.ob-actions{display:flex;gap:10px;margin-top:24px;}
+
+/* Responsive */
+@media(max-width:768px){
+  #sidebar{position:fixed;top:0;left:var(--nav-w);height:100%;z-index:40;box-shadow:var(--shadow);}
+  #sidebar.hidden{transform:translateX(calc(-100% - var(--nav-w)));}
+  .dash-grid{grid-template-columns:1fr 1fr;}
+  .dash-row{grid-template-columns:1fr;}
+  #ai-panel.open{position:fixed;right:0;top:0;height:100%;z-index:60;box-shadow:var(--shadow);}
+  #content{padding:16px;}
+  #topbar{padding:0 16px;}
+}
+@media(max-width:480px){
+  .dash-grid{grid-template-columns:1fr 1fr;}
+  .modal{padding:20px;}
+}
+
+/* Animations */
+.fade-in{animation:fadeIn 0.4s ease;}
+.slide-up{animation:slideUp 0.4s cubic-bezier(0.4,0,0.2,1);}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.stagger > *{animation:slideUp 0.4s cubic-bezier(0.4,0,0.2,1) both;}
+.stagger > *:nth-child(1){animation-delay:0.05s}
+.stagger > *:nth-child(2){animation-delay:0.1s}
+.stagger > *:nth-child(3){animation-delay:0.15s}
+.stagger > *:nth-child(4){animation-delay:0.2s}
+.stagger > *:nth-child(5){animation-delay:0.25s}
+.stagger > *:nth-child(6){animation-delay:0.3s}
+
+/* Loading pulse */
+.pulse{animation:pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* Credential hide */
+.cred-mask{filter:blur(4px);user-select:none;transition:filter 0.2s;}
+.cred-mask.revealed{filter:none;}
+
+/* Calendar mini */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:11px;cursor:pointer;transition:var(--transition);font-family:'JetBrains Mono',monospace;color:var(--text3);}
+.cal-day:hover{background:var(--bg3);}
+.cal-day.today{background:var(--gold-dim);color:var(--gold);font-weight:600;}
+.cal-day.has-event::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--blue);position:absolute;bottom:2px;}
+.cal-day.has-event{position:relative;}
+.cal-day.other-month{opacity:0.3;}
+
+/* Priority dot */
+.priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+
+/* Timeline */
+.timeline-item{position:relative;padding-left:20px;padding-bottom:16px;}
+.timeline-item::before{content:'';position:absolute;left:5px;top:8px;bottom:0;width:1px;background:var(--border);}
+.timeline-item::after{content:'';position:absolute;left:0;top:6px;width:11px;height:11px;border-radius:50%;border:2px solid var(--gold);background:var(--bg);}
+.timeline-item:last-child::before{display:none;}
+
+/* Heatmap */
+.heatmap{display:grid;grid-template-columns:repeat(52,1fr);gap:2px;}
+.hm-cell{aspect-ratio:1;border-radius:2px;background:var(--border);}
+.hm-cell.l1{background:rgba(212,168,83,0.2);}
+.hm-cell.l2{background:rgba(212,168,83,0.4);}
+.hm-cell.l3{background:rgba(212,168,83,0.7);}
+.hm-cell.l4{background:var(--gold);}
+
+/* Kanban */
+.kanban{display:flex;gap:14px;overflow-x:auto;padding-bottom:8px;}
+.kanban-col{width:240px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;}
+.kanban-col-title{font-size:12px;font-weight:700;letter-spacing:0.04em;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.kanban-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:var(--transition);}
+.kanban-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+
+/* Theme toggle */
+.theme-pill{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:20px;padding:2px;gap:2px;}
+.theme-opt{padding:4px 12px;border-radius:16px;font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;color:var(--text3);transition:var(--transition);}
+.theme-opt.active{background:var(--gold-dim);color:var(--gold);}
+
+/* Floating AI btn */
+#ai-fab{position:fixed;bottom:24px;right:24px;width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#9B6E2A);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 20px rgba(212,168,83,0.4);transition:var(--transition);z-index:100;}
+#ai-fab:hover{transform:scale(1.08);box-shadow:0 8px 30px rgba(212,168,83,0.5);}
+#ai-fab.hidden{display:none;}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:16px 0;}
+
+/* Empty state */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;color:var(--text3);text-align:center;gap:8px;}
+.empty-icon{font-size:36px;opacity:0.5;}
+.empty-text{font-size:13px;}
+.empty-sub{font-size:11px;font-family:'JetBrains Mono',monospace;}
+
+/* Grip */
+.context-menu{position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px;z-index:300;min-width:160px;box-shadow:var(--shadow);}
+.cm-item{padding:7px 12px;border-radius:6px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text2);transition:var(--transition);}
+.cm-item:hover{background:var(--bg3);color:var(--text);}
+.cm-item.danger{color:var(--red);}
+.cm-item.danger:hover{background:var(--red-dim);}
+</style>
+</head>
+<body>
+
+<!-- Onboarding -->
+<div id="onboarding">
+  <div class="ob-logo">⌘</div>
+  <div class="ob-card">
+    <div id="ob-s1" class="ob-step active">
+      <div class="ob-title">Selamat Datang</div>
+      <div class="ob-sub">Personal Hub adalah Command Center pribadi Anda — satu tempat untuk mengelola hidup, bisnis, dan masa depan dengan cerdas.</div>
+      <div class="input-group">
+        <label class="input-label">NAMA LENGKAP ANDA</label>
+        <input class="input" id="ob-name" placeholder="Masukkan nama Anda..." autofocus>
+      </div>
+      <div class="input-group">
+        <label class="input-label">PERAN / JABATAN</label>
+        <input class="input" id="ob-role" placeholder="Entrepreneur, Direktur, CEO...">
+      </div>
+      <div class="ob-actions">
+        <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="obNext()">Mulai Setup →</button>
+      </div>
+    </div>
+    <div id="ob-s2" class="ob-step">
+      <div class="ob-title">Foto Profil</div>
+      <div class="ob-sub">Personalisasi tampilan Anda agar terasa seperti milik sendiri.</div>
+      <div style="display:flex;gap:12px;margin-bottom:20px">
+        <div id="ob-avatar-preview" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--blue));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0;" id="ob-av"></div>
+        <div style="flex:1">
+          <div class="input-group" style="margin-bottom:8px">
+            <label class="input-label">INISIAL (OTOMATIS)</label>
+            <input class="input" id="ob-initial" readonly style="color:var(--gold)">
+          </div>
+          <div class="input-group">
+            <label class="input-label">WARNA TEMA</label>
+            <select class="input" id="ob-color">
+              <option value="gold">Emas (Default)</option>
+              <option value="blue">Biru Elegan</option>
+              <option value="green">Hijau Emerald</option>
+              <option value="purple">Ungu Royal</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="ob-actions">
+        <button class="btn btn-ghost" onclick="obPrev()">← Kembali</button>
+        <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="obNext()">Lanjut →</button>
+      </div>
+    </div>
+    <div id="ob-s3" class="ob-step">
+      <div class="ob-title">Siap Digunakan!</div>
+      <div class="ob-sub">Personal Hub Command Center Anda telah siap. Data tersimpan di browser Anda secara aman.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:var(--radius-sm)">
+          <span style="font-size:18px">🤖</span>
+          <div><div style="font-size:13px;font-weight:600">AI Assistant terintegrasi</div><div style="font-size:11px;color:var(--text3)">Tanya, ringkas, dan analisis data Anda</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:var(--radius-sm)">
+          <span style="font-size:18px">📱</span>
+          <div><div style="font-size:13px;font-weight:600">Responsive di semua perangkat</div><div style="font-size:11px;color:var(--text3)">Desktop, tablet, dan smartphone</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg3);border-radius:var(--radius-sm)">
+          <span style="font-size:18px">🔒</span>
+          <div><div style="font-size:13px;font-weight:600">Data tersimpan lokal & aman</div><div style="font-size:11px;color:var(--text3)">Tidak ada data yang dikirim ke server</div></div>
+        </div>
+      </div>
+      <div class="ob-actions">
+        <button class="btn btn-ghost" onclick="obPrev()">← Kembali</button>
+        <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="finishOnboarding()">Masuk ke Hub ✓</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" style="display:none;width:100%;height:100%;display:none;flex;">
+
+  <!-- Nav Rail -->
+  <div id="nav-rail">
+    <div class="nav-logo" onclick="setSection('dashboard')" title="Personal Hub">⌘</div>
+    <div class="nav-rail-item active" data-section="dashboard" onclick="setSection('dashboard')">
+      🏠<span class="tooltip">Dashboard</span>
+    </div>
+    <div class="nav-rail-item" data-section="work" onclick="setSection('work')">
+      ⚡<span class="tooltip">Pekerjaan</span>
+    </div>
+    <div class="nav-rail-item" data-section="business" onclick="setSection('business')">
+      💼<span class="tooltip">Bisnis</span>
+    </div>
+    <div class="nav-rail-item" data-section="family" onclick="setSection('family')">
+      🏡<span class="tooltip">Keluarga</span>
+    </div>
+    <div class="nav-rail-item" data-section="calendar" onclick="setSection('calendar')">
+      📅<span class="tooltip">Kalender</span>
+    </div>
+    <div class="nav-rail-item" data-section="contacts" onclick="setSection('contacts')">
+      👥<span class="tooltip">Kontak</span>
+    </div>
+    <div class="nav-rail-item" data-section="credentials" onclick="setSection('credentials')">
+      🔐<span class="tooltip">Kredensial</span>
+    </div>
+    <div class="nav-rail-item" data-section="data" onclick="setSection('data')">
+      📋<span class="tooltip">Data Penting</span>
+    </div>
+    <div class="nav-rail-item" data-section="plans" onclick="setSection('plans')">
+      🎯<span class="tooltip">Rencana</span>
+    </div>
+    <div class="nav-spacer"></div>
+    <div class="nav-rail-item" onclick="toggleAI()" id="ai-rail-btn">
+      🤖<span class="tooltip">AI Assistant</span>
+    </div>
+    <div class="nav-rail-item" data-section="settings" onclick="setSection('settings')">
+      ⚙️<span class="tooltip">Pengaturan</span>
+    </div>
+    <div class="nav-avatar" id="nav-avatar" onclick="setSection('settings')">U</div>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-section-title" id="sb-title">Dashboard</div>
+      <div class="sidebar-section-sub" id="sb-sub">COMMAND CENTER</div>
+    </div>
+    <div class="sidebar-search">
+      <span class="s-icon">🔍</span>
+      <input placeholder="Cari di semua data..." id="global-search" oninput="handleSearch(this.value)">
+    </div>
+    <div class="sidebar-list" id="sb-list"></div>
+    <div class="sidebar-footer">
+      <div class="profile-mini" onclick="setSection('settings')">
+        <div class="pm-avatar" id="pm-avatar">U</div>
+        <div>
+          <div class="pm-name" id="pm-name">User</div>
+          <div class="pm-role" id="pm-role">Personal Hub</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main">
+    <div id="topbar">
+      <div class="topbar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</div>
+      <div class="topbar-breadcrumb">
+        <span class="tb-section">Personal Hub</span>
+        <span class="tb-sep">/</span>
+        <span class="tb-current" id="tb-current">Dashboard</span>
+      </div>
+      <div class="topbar-date" id="tb-date"></div>
+      <button class="topbar-btn ghost" id="topbar-view-btn" onclick="toggleView()" style="display:none">⊞ Tampilan</button>
+      <button class="topbar-btn primary" id="topbar-add-btn" onclick="openAddModal()" style="display:none">+ Tambah</button>
+      <div class="topbar-btn ghost" onclick="toggleAI()" style="gap:4px;cursor:pointer">🤖 <span style="display:none" class="show-md">AI</span></div>
+    </div>
+    <div id="content"></div>
+  </div>
+
+  <!-- AI Panel -->
+  <div id="ai-panel">
+    <div class="ai-header">
+      <div>
+        <div class="ai-title">✦ AI Assistant</div>
+        <div class="ai-subtitle">POWERED BY CLAUDE</div>
+      </div>
+      <div class="ai-close" onclick="toggleAI()">✕</div>
+    </div>
+    <div class="ai-messages" id="ai-messages">
+      <div class="ai-msg assistant">
+        <div class="ai-badge">✦ CLAUDE</div>
+        <div id="ai-welcome-msg">Halo! Saya AI Assistant Anda. Saya dapat membantu menganalisis data, membuat rencana, meringkas informasi, atau menjawab pertanyaan seputar produktivitas Anda.</div>
+      </div>
+    </div>
+    <div class="ai-quick-prompts" id="ai-quick-prompts">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.1em;padding:4px 0 6px">PERTANYAAN CEPAT</div>
+      <button class="ai-quick-btn" onclick="sendQuick('Analisis produktivitas saya berdasarkan data pekerjaan')">📊 Analisis produktivitas saya</button>
+      <button class="ai-quick-btn" onclick="sendQuick('Apa saja yang perlu saya prioritaskan hari ini?')">⚡ Prioritas hari ini</button>
+      <button class="ai-quick-btn" onclick="sendQuick('Ringkas rencana pengembangan saya')">🎯 Ringkas rencana saya</button>
+      <button class="ai-quick-btn" onclick="sendQuick('Berikan saran untuk meningkatkan produktivitas')">💡 Saran produktivitas</button>
+    </div>
+    <div class="ai-input-area">
+      <div class="ai-input-row">
+        <textarea class="ai-input" id="ai-input" placeholder="Tanya apapun tentang data Anda..." rows="1" onkeydown="aiKeydown(event)" oninput="autoResize(this)"></textarea>
+        <button class="ai-send" onclick="sendAI()">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Tambah Item</div>
+    <div class="modal-sub" id="modal-sub">ISI FORM DI BAWAH</div>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn btn-primary" onclick="saveModal()" id="modal-save-btn">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="context-menu" id="ctx-menu" style="display:none"></div>
+
+<!-- Toast Container -->
+<div id="toast"></div>
+
+<script>
+// ===== STATE =====
+let USER = { name:'', role:'', initial:'U', color:'gold' };
+let ACTIVE = 'dashboard';
+let SIDEBAR_OPEN = true;
+let AI_OPEN = false;
+let VIEW_MODE = 'list'; // list | kanban | grid
+let MODAL_MODE = null; // add | edit
+let MODAL_EDIT_ID = null;
+let obStep = 1;
+
+// ===== DATA STORE =====
+let DB = {
+  work: [
+    { id:1, title:'Review laporan Q1', priority:'tinggi', status:'proses', due:'2026-03-30', notes:'Cek dengan tim finance', tags:['finance','laporan'] },
+    { id:2, title:'Meeting klien strategis', priority:'tinggi', status:'todo', due:'2026-04-02', notes:'Siapkan deck presentasi', tags:['klien'] },
+    { id:3, title:'Update roadmap produk', priority:'sedang', status:'proses', due:'2026-04-10', notes:'', tags:['produk'] },
+    { id:4, title:'Rekrut Head of Marketing', priority:'tinggi', status:'todo', due:'2026-04-15', notes:'Buka lowongan di LinkedIn', tags:['rekrut','hr'] },
+    { id:5, title:'Kirim invoice Maret', priority:'sedang', status:'selesai', due:'2026-03-25', notes:'', tags:['keuangan'] },
+  ],
+  business: [
+    { id:1, title:'Strategi ekspansi Q2-Q3', category:'Strategi', status:'aktif', notes:'Target: penetrasi pasar Surabaya & Makassar', progress:35 },
+    { id:2, title:'Fundraising Seri A', category:'Keuangan', status:'aktif', notes:'Target $2M, pipeline 3 investor', progress:60 },
+    { id:3, title:'Partnership distribusi nasional', category:'Operasional', status:'pipeline', notes:'Negosiasi dengan PT Sumber Alfaria', progress:20 },
+    { id:4, title:'Peluncuran produk baru', category:'Produk', status:'planning', notes:'Q3 2026, MVP sudah 70%', progress:70 },
+  ],
+  family: [
+    { id:1, name:'Anisa Rahma', role:'Istri', relation:'pasangan', phone:'+62812-3456-7890', email:'anisa@email.com', birthday:'1990-07-12', notes:'Anniversary 12 Juli — jangan lupa!' },
+    { id:2, name:'Rafif Al-Ghani', role:'Anak Sulung', relation:'anak', phone:'', email:'', birthday:'2014-03-05', notes:'Kelas 5 SD, les piano tiap Sabtu 10.00' },
+    { id:3, name:'Siti Nurhaliza', role:'Ibu', relation:'orang tua', phone:'+62821-9876-5432', email:'', birthday:'1962-11-20', notes:'Tinggal Bandung, check-up kesehatan tiap 3 bulan' },
+    { id:4, name:'Ahmad Fauzi', role:'Ayah', relation:'orang tua', phone:'+62821-1111-2222', email:'', birthday:'1960-04-08', notes:'Pensiun, aktif di pengajian RT' },
+  ],
+  calendar: [
+    { id:1, title:'Anniversary dengan Anisa', date:'2026-07-12', type:'keluarga', priority:'penting', reminder:true, notes:'Rencanakan dinner spesial' },
+    { id:2, title:'Review kinerja tahunan', date:'2026-04-15', type:'kerja', priority:'penting', reminder:true, notes:'' },
+    { id:3, title:'Rapat investor Seri A', date:'2026-04-08', type:'bisnis', priority:'penting', reminder:true, notes:'Venue: WeWork Sudirman, jam 14.00' },
+    { id:4, title:'Liburan keluarga ke Bali', date:'2026-06-20', type:'keluarga', priority:'normal', reminder:false, notes:'Book hotel & tiket sebelum April' },
+    { id:5, title:'Deadline pajak tahunan', date:'2026-03-31', type:'penting', priority:'penting', reminder:true, notes:'Koordinasi dengan Rina KAP Sejahtera' },
+    { id:6, title:'Ulang tahun Rafif', date:'2026-03-05', type:'keluarga', priority:'penting', reminder:true, notes:'Rencana pesta kecil di rumah' },
+  ],
+  contacts: [
+    { id:1, name:'Budi Santoso', role:'Direktur Utama', company:'PT Maju Jaya', phone:'+62811-222-333', email:'budi@majujaya.com', tag:'bisnis', notes:'Kenalan dari event Forbes 2024', lastContact:'2026-03-15' },
+    { id:2, name:'Dr. Hendra Wijaya', role:'Dokter Spesialis', company:'RS Bunda Jakarta', phone:'+62855-444-555', email:'hendra@rsbunda.com', tag:'kesehatan', notes:'Dokter keluarga, schedule 3 bulanan', lastContact:'2026-02-10' },
+    { id:3, name:'Rina Kusuma', role:'Partner Akuntan', company:'KAP Sejahtera', phone:'+62877-666-777', email:'rina@kapsejahtera.com', tag:'bisnis', notes:'Menangani pajak & audit tahunan', lastContact:'2026-03-20' },
+    { id:4, name:'James Lim', role:'Angel Investor', company:'Prasetia Dwidharma', phone:'+6281-888-999', email:'james@pd.vc', tag:'investor', notes:'Portfolio tech & consumer, invest $50K-500K', lastContact:'2026-03-01' },
+  ],
+  credentials: [
+    { id:1, service:'Email Utama (Gmail)', username:'', password:'', notes:'', category:'email', visible:false },
+    { id:2, service:'Internet Banking', username:'', password:'', notes:'', category:'keuangan', visible:false },
+    { id:3, service:'LinkedIn', username:'', password:'', notes:'', category:'sosial', visible:false },
+    { id:4, service:'AWS Console', username:'', password:'', notes:'', category:'server', visible:false },
+  ],
+  data: [
+    { id:1, title:'No. KTP', value:'3201XXXXXXXXXX01', category:'Identitas', notes:'Berlaku seumur hidup, KTP elektronik' },
+    { id:2, title:'No. NPWP', value:'12.345.678.9-XXX.XXX', category:'Pajak', notes:'KPP Pratama Jakarta Selatan' },
+    { id:3, title:'No. Rekening BCA Utama', value:'0123-456-789', category:'Keuangan', notes:'Cabang KCU Sudirman' },
+    { id:4, title:'No. BPJS Kesehatan', value:'0001234567890', category:'Asuransi', notes:'Kelas 1, iuran auto-debit tiap tgl 10' },
+    { id:5, title:'No. Paspor', value:'A1234567', category:'Identitas', notes:'Berlaku s/d 2029, visa Schengen aktif' },
+    { id:6, title:'No. STNK Mobil', value:'B 1234 XYZ', category:'Kendaraan', notes:'Toyota Alphard 2023, pajak s/d Nov 2026' },
+  ],
+  plans: [
+    { id:1, title:'Ekspansi bisnis ke Surabaya & Makassar', phase:'Q3 2026', status:'aktif', priority:'tinggi', details:'Cari lokasi strategis, rekrut 5 staf lokal per kota. Budget operasional 500jt/kota.', milestones:['Riset pasar selesai','Lokasi signed','Rekrut tim','Soft launch','Grand opening'] },
+    { id:2, title:'Beli properti investasi kedua', phase:'Q1 2027', status:'riset', priority:'tinggi', details:'Target BSD atau Alam Sutera. Budget maks 2.5M. ROI target 8%/tahun dari sewa.', milestones:['Riset kawasan','Survey 5 properti','Konsultasi KPR','Penawaran','Akad'] },
+    { id:3, title:'Sertifikasi PMP & MBA Part-time', phase:'Q4 2026', status:'planning', priority:'sedang', details:'PMP: daftar batch Juli. MBA: pendaftaran PPM Manajemen atau Prasetiya Mulya.', milestones:['Daftar kelas PMP','Lulus ujian PMP','Apply MBA','Mulai kuliah'] },
+    { id:4, title:'Bangun passive income stream', phase:'2027', status:'riset', priority:'sedang', details:'Kombinasi properti sewa, dividend stock, dan royalti konten digital.', milestones:['Identifikasi instrumen','Alokasikan modal','Eksekusi','Review'] },
+  ],
+  notes: [
+    { id:1, title:'Visi 5 Tahun', content:'Membangun 3 bisnis profitabel, memiliki kebebasan finansial, dan berkontribusi pada 1000 lapangan kerja di Indonesia.', pinned:true, color:'gold', created:'2026-01-15' },
+    { id:2, title:'Framework Keputusan Bisnis', content:'1. Apakah sesuai visi? 2. ROI > 15%? 3. Tim mampu eksekusi? 4. Market size cukup? 5. Timing tepat?', pinned:true, color:'blue', created:'2026-02-01' },
+  ]
+};
+
+// ===== INIT =====
+function init() {
+  const saved = localStorage.getItem('phub_user');
+  const savedDB = localStorage.getItem('phub_db');
+  if (savedDB) { try { DB = JSON.parse(savedDB); } catch(e){} }
+  if (saved) {
+    USER = JSON.parse(saved);
+    skipOnboarding();
+  }
+  updateDateDisplay();
+  setInterval(updateDateDisplay, 60000);
+}
+
+function updateDateDisplay() {
+  const now = new Date();
+  const d = now.toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  const t = now.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('tb-date').textContent = `${d} · ${t}`;
+}
+
+function saveDB() { localStorage.setItem('phub_db', JSON.stringify(DB)); }
+function saveUser() { localStorage.setItem('phub_user', JSON.stringify(USER)); }
+
+// ===== ONBOARDING =====
+function obNext() {
+  if (obStep === 1) {
+    const name = document.getElementById('ob-name').value.trim();
+    if (!name) { showToast('Masukkan nama Anda', 'error'); return; }
+    USER.name = name;
+    USER.role = document.getElementById('ob-role').value.trim() || 'Personal Hub';
+    USER.initial = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('ob-initial').value = USER.initial;
+    document.getElementById('ob-avatar-preview').textContent = USER.initial;
+  }
+  if (obStep === 2) {
+    USER.color = document.getElementById('ob-color').value;
+  }
+  obStep++;
+  document.querySelectorAll('.ob-step').forEach((s,i) => s.classList.toggle('active', i+1===obStep));
+}
+function obPrev() {
+  obStep--;
+  document.querySelectorAll('.ob-step').forEach((s,i) => s.classList.toggle('active', i+1===obStep));
+}
+function finishOnboarding() {
+  USER.name = document.getElementById('ob-name').value.trim() || USER.name;
+  USER.role = document.getElementById('ob-role').value.trim() || USER.role;
+  USER.initial = USER.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  USER.color = document.getElementById('ob-color')?.value || 'gold';
+  saveUser();
+  skipOnboarding();
+}
+function skipOnboarding() {
+  document.getElementById('onboarding').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  updateProfile();
+  setSection('dashboard');
+  // AI welcome
+  setTimeout(() => {
+    document.getElementById('ai-welcome-msg').textContent = `Halo, ${USER.name}! Saya siap membantu Anda hari ini. Ada yang bisa saya bantu?`;
+  }, 300);
+}
+function updateProfile() {
+  document.getElementById('nav-avatar').textContent = USER.initial;
+  document.getElementById('pm-avatar').textContent = USER.initial;
+  document.getElementById('pm-name').textContent = USER.name;
+  document.getElementById('pm-role').textContent = USER.role;
+}
+
+// ===== NAVIGATION =====
+function setSection(id) {
+  ACTIVE = id;
+  VIEW_MODE = 'list';
+  document.querySelectorAll('.nav-rail-item[data-section]').forEach(el => {
+    el.classList.toggle('active', el.dataset.section === id);
+  });
+  const labels = {
+    dashboard:'Dashboard', work:'Pekerjaan', business:'Bisnis', family:'Keluarga',
+    calendar:'Kalender', contacts:'Kontak', credentials:'Kredensial',
+    data:'Data Penting', plans:'Rencana', settings:'Pengaturan', notes:'Catatan'
+  };
+  const subs = {
+    dashboard:'RINGKASAN HARIAN', work:'MANAJEMEN TUGAS', business:'OPERASIONAL BISNIS',
+    family:'DATA KELUARGA', calendar:'JADWAL & EVENT', contacts:'ORANG PENTING',
+    credentials:'PASSWORD MANAGER', data:'DOKUMEN PENTING', plans:'RENCANA PENGEMBANGAN',
+    settings:'PERSONALISASI', notes:'CATATAN CEPAT'
+  };
+  document.getElementById('sb-title').textContent = labels[id] || id;
+  document.getElementById('sb-sub').textContent = subs[id] || '';
+  document.getElementById('tb-current').textContent = labels[id] || id;
+  const showAdd = !['dashboard','settings'].includes(id);
+  document.getElementById('topbar-add-btn').style.display = showAdd ? '' : 'none';
+  const showView = ['work','business','contacts'].includes(id);
+  document.getElementById('topbar-view-btn').style.display = showView ? '' : 'none';
+  document.getElementById('global-search').value = '';
+  renderSidebar(id);
+  renderContent(id, '');
+}
+
+function toggleSidebar() {
+  SIDEBAR_OPEN = !SIDEBAR_OPEN;
+  document.getElementById('sidebar').classList.toggle('hidden', !SIDEBAR_OPEN);
+}
+
+function toggleAI() {
+  AI_OPEN = !AI_OPEN;
+  document.getElementById('ai-panel').classList.toggle('open', AI_OPEN);
+  document.getElementById('ai-rail-btn').classList.toggle('active', AI_OPEN);
+}
+
+function toggleView() {
+  const modes = ['list','kanban','grid'];
+  VIEW_MODE = modes[(modes.indexOf(VIEW_MODE)+1)%modes.length];
+  const icons = {list:'≡ List', kanban:'⊞ Kanban', grid:'⊡ Grid'};
+  document.getElementById('topbar-view-btn').textContent = icons[VIEW_MODE];
+  renderContent(ACTIVE, document.getElementById('global-search').value);
+}
+
+function handleSearch(val) {
+  renderContent(ACTIVE, val.toLowerCase());
+  renderSidebar(ACTIVE, val.toLowerCase());
+}
+
+// ===== SIDEBAR =====
+function renderSidebar(section, search='') {
+  const el = document.getElementById('sb-list');
+  const items = getSidebarItems(section, search);
+  el.innerHTML = items;
+}
+
+function getSidebarItems(section, search='') {
+  const sections = {
+    dashboard: () => `
+      <div class="sidebar-group-label">MODUL</div>
+      ${[['work','⚡','Pekerjaan',DB.work.filter(w=>w.status!=='selesai').length],
+         ['business','💼','Bisnis',DB.business.length],
+         ['family','🏡','Keluarga',DB.family.length],
+         ['calendar','📅','Kalender',DB.calendar.filter(e=>new Date(e.date)>=new Date()).length],
+         ['contacts','👥','Kontak',DB.contacts.length],
+         ['credentials','🔐','Kredensial',DB.credentials.length],
+         ['data','📋','Data Penting',DB.data.length],
+         ['plans','🎯','Rencana',DB.plans.length],
+      ].map(([s,i,l,c])=>`
+        <div class="sidebar-item" onclick="setSection('${s}')">
+          <span class="si-icon">${i}</span>
+          <span class="si-label">${l}</span>
+          <span class="si-count">${c}</span>
+        </div>`).join('')}`,
+    work: () => `
+      <div class="sidebar-group-label">STATUS</div>
+      ${[['todo','🔵','To Do'],['proses','🟡','In Progress'],['selesai','🟢','Selesai']].map(([s,i,l])=>`
+        <div class="sidebar-item" onclick="filterWork('${s}')">
+          <span class="si-icon">${i}</span>
+          <span class="si-label">${l}</span>
+          <span class="si-count">${DB.work.filter(w=>w.status===s).length}</span>
+        </div>`).join('')}
+      <div class="sidebar-group-label">PRIORITAS</div>
+      ${[['tinggi','🔴','Tinggi'],['sedang','🟠','Sedang'],['rendah','🟢','Rendah']].map(([p,i,l])=>`
+        <div class="sidebar-item" onclick="filterWork_p('${p}')">
+          <span class="si-icon">${i}</span>
+          <span class="si-label">${l}</span>
+          <span class="si-count">${DB.work.filter(w=>w.priority===p).length}</span>
+        </div>`).join('')}`,
+    business: () => `
+      <div class="sidebar-group-label">KATEGORI</div>
+      ${[...new Set(DB.business.map(b=>b.category))].map(cat=>`
+        <div class="sidebar-item">
+          <span class="si-icon">◆</span>
+          <span class="si-label">${cat}</span>
+          <span class="si-count">${DB.business.filter(b=>b.category===cat).length}</span>
+        </div>`).join('')}`,
+    calendar: () => `
+      <div class="sidebar-group-label">TIPE</div>
+      ${[['penting','🔴','Penting'],['kerja','💼','Kerja'],['bisnis','📈','Bisnis'],['keluarga','🏡','Keluarga']].map(([t,i,l])=>`
+        <div class="sidebar-item">
+          <span class="si-icon">${i}</span>
+          <span class="si-label">${l}</span>
+          <span class="si-count">${DB.calendar.filter(c=>c.type===t).length}</span>
+        </div>`).join('')}`,
+    contacts: () => `
+      <div class="sidebar-group-label">KATEGORI</div>
+      ${[...new Set(DB.contacts.map(c=>c.tag))].map(tag=>`
+        <div class="sidebar-item">
+          <span class="si-icon">◎</span>
+          <span class="si-label">${tag}</span>
+          <span class="si-count">${DB.contacts.filter(c=>c.tag===tag).length}</span>
+        </div>`).join('')}`,
+    credentials: () => `
+      <div class="sidebar-group-label">KATEGORI</div>
+      ${[...new Set(DB.credentials.map(c=>c.category||'lainnya'))].map(cat=>`
+        <div class="sidebar-item">
+          <span class="si-icon">🔑</span>
+          <span class="si-label">${cat}</span>
+          <span class="si-count">${DB.credentials.filter(c=>(c.category||'lainnya')===cat).length}</span>
+        </div>`).join('')}`,
+    data: () => `
+      <div class="sidebar-group-label">KATEGORI</div>
+      ${[...new Set(DB.data.map(d=>d.category))].map(cat=>`
+        <div class="sidebar-item">
+          <span class="si-icon">📁</span>
+          <span class="si-label">${cat}</span>
+          <span class="si-count">${DB.data.filter(d=>d.category===cat).length}</span>
+        </div>`).join('')}`,
+    plans: () => `
+      <div class="sidebar-group-label">STATUS</div>
+      ${[['aktif','🟢','Aktif'],['riset','🔵','Riset'],['planning','🟡','Planning'],['selesai','⚪','Selesai']].map(([s,i,l])=>`
+        <div class="sidebar-item">
+          <span class="si-icon">${i}</span>
+          <span class="si-label">${l}</span>
+          <span class="si-count">${DB.plans.filter(p=>p.status===s).length}</span>
+        </div>`).join('')}`,
+    family: () => `
+      <div class="sidebar-group-label">RELASI</div>
+      ${DB.family.map(f=>`
+        <div class="sidebar-item">
+          <span class="si-icon">👤</span>
+          <span class="si-label">${f.name}</span>
+          <span class="si-count" style="font-size:10px;color:var(--text3)">${f.role}</span>
+        </div>`).join('')}`,
+    settings: () => `
+      <div class="sidebar-group-label">PENGATURAN</div>
+      ${[['Profil','👤'],['Tema','🎨'],['Notifikasi','🔔'],['Data & Privasi','🔒'],['Tentang','ℹ']].map(([l,i])=>`
+        <div class="sidebar-item">
+          <span class="si-icon">${i}</span>
+          <span class="si-label">${l}</span>
+        </div>`).join('')}`,
+  };
+  return (sections[section] || sections.dashboard)();
+}
+
+let workFilter = null, workPrioFilter = null;
+function filterWork(status) { workFilter = status; workPrioFilter = null; renderContent('work',''); }
+function filterWork_p(prio) { workPrioFilter = prio; workFilter = null; renderContent('work',''); }
+
+// ===== CONTENT RENDERERS =====
+function renderContent(section, search='') {
+  const el = document.getElementById('content');
+  el.className = '';
+  const renders = {
+    dashboard: renderDashboard,
+    work: renderWork,
+    business: renderBusiness,
+    family: renderFamily,
+    calendar: renderCalendar,
+    contacts: renderContacts,
+    credentials: renderCredentials,
+    data: renderData,
+    plans: renderPlans,
+    settings: renderSettings,
+    notes: renderNotes,
+  };
+  el.innerHTML = (renders[section] || renderDashboard)(search);
+  el.className = 'fade-in';
+  attachHandlers();
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const upcoming = DB.calendar.filter(e=>new Date(e.date)>=today).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,5);
+  const highPrio = DB.work.filter(w=>w.priority==='tinggi'&&w.status!=='selesai').slice(0,4);
+  const totalWork = DB.work.length;
+  const doneWork = DB.work.filter(w=>w.status==='selesai').length;
+  const workPct = totalWork ? Math.round(doneWork/totalWork*100) : 0;
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if(h<12) return 'Selamat Pagi';
+    if(h<15) return 'Selamat Siang';
+    if(h<18) return 'Selamat Sore';
+    return 'Selamat Malam';
+  })();
+  const bdays = DB.family.filter(f => {
+    if(!f.birthday) return false;
+    const bd = new Date(f.birthday);
+    const thisYear = new Date(today.getFullYear(), bd.getMonth(), bd.getDate());
+    const diff = (thisYear - today) / (1000*60*60*24);
+    return diff >= 0 && diff <= 30;
+  });
+
+  return `
+<div style="max-width:1200px">
+  <!-- Greeting -->
+  <div style="margin-bottom:24px">
+    <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:400;color:var(--text)">${greeting}, <span style="color:var(--gold)">${USER.name}</span> ✦</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);margin-top:4px;letter-spacing:0.08em">${new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).toUpperCase()}</div>
+  </div>
+  ${bdays.length ? `<div style="background:linear-gradient(90deg,rgba(212,168,83,0.08),transparent);border-left:3px solid var(--gold);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:10px 16px;margin-bottom:20px;font-size:13px">
+    🎂 <strong>${bdays.map(b=>b.name).join(', ')}</strong> berulang tahun dalam 30 hari ke depan!
+  </div>` : ''}
+
+  <!-- Stats -->
+  <div class="dash-grid stagger">
+    <div class="stat-card" onclick="setSection('work')" style="border-top:2px solid var(--gold);">
+      <div class="sc-icon">⚡</div>
+      <div class="sc-val" style="color:var(--gold)">${DB.work.filter(w=>w.status!=='selesai').length}</div>
+      <div class="sc-label">TUGAS AKTIF</div>
+      <div style="margin-top:8px"><div class="progress-bar"><div class="progress-fill" style="width:${workPct}%;background:var(--gold)"></div></div></div>
+      <div class="sc-trend" style="color:var(--text3)">${workPct}% selesai</div>
+    </div>
+    <div class="stat-card" onclick="setSection('calendar')" style="border-top:2px solid var(--blue);">
+      <div class="sc-icon">📅</div>
+      <div class="sc-val" style="color:var(--blue)">${upcoming.length}</div>
+      <div class="sc-label">EVENT MENDATANG</div>
+      <div class="sc-trend" style="color:var(--blue)">${upcoming[0] ? upcoming[0].title.substring(0,22)+'...' : 'Tidak ada'}</div>
+    </div>
+    <div class="stat-card" onclick="setSection('plans')" style="border-top:2px solid var(--purple);">
+      <div class="sc-icon">🎯</div>
+      <div class="sc-val" style="color:var(--purple)">${DB.plans.filter(p=>p.status==='aktif').length}</div>
+      <div class="sc-label">RENCANA AKTIF</div>
+      <div class="sc-trend" style="color:var(--text3)">${DB.plans.length} total rencana</div>
+    </div>
+    <div class="stat-card" onclick="setSection('contacts')" style="border-top:2px solid var(--green);">
+      <div class="sc-icon">👥</div>
+      <div class="sc-val" style="color:var(--green)">${DB.contacts.length}</div>
+      <div class="sc-label">KONTAK PENTING</div>
+      <div class="sc-trend" style="color:var(--text3)">${DB.business.length} agenda bisnis</div>
+    </div>
+  </div>
+
+  <!-- Main rows -->
+  <div class="dash-row">
+    <!-- Upcoming -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-heading">📅 Event Mendatang</div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="setSection('calendar')">Lihat Semua</button>
+      </div>
+      ${upcoming.map(e=>{
+        const d = new Date(e.date);
+        const diff = Math.ceil((d-today)/(1000*60*60*24));
+        const diffTxt = diff===0?'Hari ini':diff===1?'Besok':`${diff} hari lagi`;
+        const typeColor = {kerja:'b-blue',bisnis:'b-purple',keluarga:'b-pink',penting:'b-red'}[e.type]||'b-gray';
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="text-align:center;min-width:44px;background:var(--bg);border-radius:8px;padding:6px 4px;border:1px solid var(--border)">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3)">${d.toLocaleDateString('id-ID',{month:'short'}).toUpperCase()}</div>
+            <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--blue);line-height:1">${d.getDate()}</div>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.title}</div>
+            <div style="display:flex;gap:6px;margin-top:3px;align-items:center">
+              <span class="badge ${typeColor}">${e.type}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${diff<=3?'var(--red)':'var(--text3)'}">${diffTxt}</span>
+            </div>
+          </div>
+          ${e.reminder?'<span style="font-size:12px">🔔</span>':''}
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Priority tasks -->
+    <div class="card">
+      <div class="section-header">
+        <div class="section-heading">⚡ Prioritas Tinggi</div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="setSection('work')">Semua</button>
+      </div>
+      ${highPrio.length===0?`<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">Semua selesai!</div></div>`:
+        highPrio.map(w=>{
+          const due = w.due ? new Date(w.due) : null;
+          const overdue = due && due < today;
+          return `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start">
+            <div class="priority-dot" style="background:${w.priority==='tinggi'?'var(--red)':w.priority==='sedang'?'var(--gold)':'var(--green)'}"></div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:500">${w.title}</div>
+              <div style="display:flex;gap:6px;margin-top:3px">
+                <span class="badge ${w.status==='proses'?'b-gold':w.status==='todo'?'b-blue':'b-green'}">${w.status}</span>
+                ${due?`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${overdue?'var(--red)':'var(--text3)'}">${overdue?'Terlambat! ':''}${due.toLocaleDateString('id-ID',{day:'numeric',month:'short'})}</span>`:''}
+              </div>
+            </div>
+          </div>`;
+        }).join('')}
+    </div>
+  </div>
+
+  <!-- Business & Plans row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    <div class="card">
+      <div class="section-header">
+        <div class="section-heading">💼 Bisnis Aktif</div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="setSection('business')">Detail</button>
+      </div>
+      ${DB.business.filter(b=>b.status==='aktif').map(b=>`
+        <div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <div style="font-size:13px;font-weight:500">${b.title}</div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)">${b.progress||0}%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${b.progress||0}%;background:var(--gold)"></div></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">${b.notes||''}</div>
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="section-header">
+        <div class="section-heading">🎯 Rencana Aktif</div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:5px 10px" onclick="setSection('plans')">Detail</button>
+      </div>
+      ${DB.plans.filter(p=>p.status==='aktif'||p.status==='riset').slice(0,3).map(p=>`
+        <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start">
+          <span class="badge ${p.status==='aktif'?'b-green':'b-blue'}" style="margin-top:2px">${p.status}</span>
+          <div>
+            <div style="font-size:13px;font-weight:500">${p.title}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-top:2px">${p.phase}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <!-- Quick access -->
+  <div class="card">
+    <div class="section-heading" style="margin-bottom:14px">⚡ Akses Cepat</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${[['📋','Data Penting','data'],['🔐','Kredensial','credentials'],['👥','Kontak','contacts'],['🏡','Keluarga','family'],['📝','Catatan','notes']].map(([i,l,s])=>`
+        <div onclick="setSection('${s}')" style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);font-size:13px;font-weight:500" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+          <span>${i}</span><span>${l}</span>
+        </div>`).join('')}
+    </div>
+  </div>
+</div>`;
+}
+
+// ===== WORK =====
+function renderWork(search='') {
+  let items = DB.work;
+  if (workFilter) items = items.filter(w=>w.status===workFilter);
+  if (workPrioFilter) items = items.filter(w=>w.priority===workPrioFilter);
+  if (search) items = items.filter(w=>w.title.toLowerCase().includes(search)||w.notes?.toLowerCase().includes(search)||(w.tags||[]).some(t=>t.includes(search)));
+
+  if (VIEW_MODE === 'kanban') return renderWorkKanban(items);
+
+  const pColors = {tinggi:'var(--red)',sedang:'var(--gold)',rendah:'var(--green)'};
+  const sColors = {todo:'b-blue',proses:'b-gold',selesai:'b-green'};
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  return `
+<div style="max-width:900px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px">Manajemen Pekerjaan</div>
+    <div style="display:flex;gap:6px">
+      <div class="tabs">
+        <div class="tab ${!workFilter&&!workPrioFilter?'active':''}" onclick="workFilter=null;workPrioFilter=null;renderContent('work','')">Semua</div>
+        <div class="tab ${workFilter==='todo'?'active':''}" onclick="filterWork('todo')">Todo</div>
+        <div class="tab ${workFilter==='proses'?'active':''}" onclick="filterWork('proses')">Proses</div>
+        <div class="tab ${workFilter==='selesai'?'active':''}" onclick="filterWork('selesai')">Selesai</div>
+      </div>
+    </div>
+  </div>
+  ${items.length===0?`<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">Tidak ada tugas ditemukan</div><div class="empty-sub">Klik + Tambah untuk menambahkan tugas baru</div></div>`:''}
+  <div class="stagger">
+  ${items.map(item=>{
+    const due = item.due ? new Date(item.due) : null;
+    const overdue = due && due < today && item.status !== 'selesai';
+    return `<div class="item-card" data-id="${item.id}" oncontextmenu="showCtx(event,'work',${item.id})" style="border-left:3px solid ${pColors[item.priority]||'var(--border)'}">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px">
+          <div style="font-size:14px;font-weight:500;flex:1;${item.status==='selesai'?'text-decoration:line-through;opacity:0.5':''}">${item.title}</div>
+          <span class="badge ${sColors[item.status]||'b-gray'}">${item.status}</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span class="badge b-gray" style="font-size:9px">${item.priority}</span>
+          ${due?`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${overdue?'var(--red)':'var(--text3)'};background:${overdue?'var(--red-dim)':'transparent'};padding:${overdue?'2px 6px':0};border-radius:4px">${overdue?'⚠ TERLAMBAT · ':''}${due.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
+          ${(item.tags||[]).map(t=>`<span class="badge b-blue" style="font-size:9px">${t}</span>`).join('')}
+        </div>
+        ${item.notes?`<div style="font-size:12px;color:var(--text3);margin-top:6px;font-style:italic">${item.notes}</div>`:''}
+      </div>
+      <div class="item-actions">
+        <button class="btn btn-ghost btn-icon" onclick="editItem('work',${item.id})" title="Edit">✎</button>
+        <button class="btn btn-danger btn-icon" onclick="deleteItem('work',${item.id})" title="Hapus">✕</button>
+      </div>
+    </div>`;
+  }).join('')}
+  </div>
+</div>`;
+}
+
+function renderWorkKanban(items) {
+  const cols = [
+    {status:'todo',label:'To Do',color:'var(--blue)',items:items.filter(w=>w.status==='todo')},
+    {status:'proses',label:'In Progress',color:'var(--gold)',items:items.filter(w=>w.status==='proses')},
+    {status:'selesai',label:'Selesai',color:'var(--green)',items:items.filter(w=>w.status==='selesai')},
+  ];
+  return `<div style="max-width:900px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Kanban Board</div>
+    <div class="kanban">
+      ${cols.map(col=>`
+        <div class="kanban-col">
+          <div class="kanban-col-title">
+            <span style="width:8px;height:8px;border-radius:50%;background:${col.color};display:inline-block"></span>
+            ${col.label} <span style="font-size:10px;color:var(--text3);font-weight:400">${col.items.length}</span>
+          </div>
+          ${col.items.map(item=>`
+            <div class="kanban-card" oncontextmenu="showCtx(event,'work',${item.id})">
+              <div style="font-size:13px;font-weight:500;margin-bottom:6px">${item.title}</div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap">
+                <span class="badge b-gray" style="font-size:9px">${item.priority}</span>
+                ${item.due?`<span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3)">${new Date(item.due).toLocaleDateString('id-ID',{day:'numeric',month:'short'})}</span>`:''}
+              </div>
+            </div>`).join('')}
+          <div style="padding:8px;border:1px dashed var(--border);border-radius:var(--radius-sm);text-align:center;font-size:12px;color:var(--text3);cursor:pointer;margin-top:4px" onclick="openAddModal()">+ Tambah</div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ===== BUSINESS =====
+function renderBusiness(search='') {
+  const items = DB.business.filter(b=>!search||b.title.toLowerCase().includes(search)||b.category?.toLowerCase().includes(search));
+  const statusColors = {aktif:'b-green',pipeline:'b-blue',planning:'b-gold',selesai:'b-gray'};
+  return `<div style="max-width:900px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Agenda Bisnis</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="stagger">
+    ${items.map(item=>`
+      <div class="card" style="position:relative" oncontextmenu="showCtx(event,'business',${item.id})">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <span class="badge b-blue">${item.category}</span>
+          <span class="badge ${statusColors[item.status]||'b-gray'}">${item.status}</span>
+        </div>
+        <div style="font-family:'Playfair Display',serif;font-size:17px;margin-bottom:8px;line-height:1.3">${item.title}</div>
+        ${item.progress!==undefined?`
+        <div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:4px"><span>Progress</span><span>${item.progress}%</span></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${item.progress}%;background:${item.progress>60?'var(--green)':item.progress>30?'var(--gold)':'var(--blue)'}"></div></div>
+        </div>`:''} 
+        ${item.notes?`<div style="font-size:12px;color:var(--text3);line-height:1.5">${item.notes}</div>`:''}
+        <div class="item-actions" style="position:absolute;top:14px;right:14px">
+          <button class="btn btn-ghost btn-icon" onclick="editItem('business',${item.id})">✎</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteItem('business',${item.id})">✕</button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ===== FAMILY =====
+function renderFamily(search='') {
+  const items = DB.family.filter(f=>!search||f.name.toLowerCase().includes(search)||f.role?.toLowerCase().includes(search));
+  const relColors = {pasangan:'b-pink',anak:'b-blue','orang tua':'b-purple',saudara:'b-green',lainnya:'b-gray'};
+  return `<div style="max-width:900px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Data Keluarga</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px" class="stagger">
+    ${items.map(item=>{
+      const today = new Date(); 
+      const bd = item.birthday ? new Date(item.birthday) : null;
+      let daysUntilBd = null;
+      if(bd) {
+        const thisYr = new Date(today.getFullYear(), bd.getMonth(), bd.getDate());
+        if(thisYr < today) thisYr.setFullYear(today.getFullYear()+1);
+        daysUntilBd = Math.ceil((thisYr-today)/(1000*60*60*24));
+      }
+      const age = bd ? today.getFullYear()-bd.getFullYear() : null;
+      const initials = item.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      const gradients = ['linear-gradient(135deg,#D4A853,#9B6E2A)','linear-gradient(135deg,#4A9EE8,#7B61FF)','linear-gradient(135deg,#52C98F,#4A9EE8)','linear-gradient(135deg,#E87AAA,#9B7FE8)'];
+      const gi = item.id % gradients.length;
+      return `<div class="card" style="text-align:center;position:relative" oncontextmenu="showCtx(event,'family',${item.id})">
+        <div style="width:60px;height:60px;border-radius:50%;${gradients[gi].replace('linear-gradient','background:linear-gradient')};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;margin:0 auto 12px">${initials}</div>
+        <div style="font-size:16px;font-weight:600">${item.name}</div>
+        <div style="display:flex;justify-content:center;gap:6px;margin:6px 0">
+          <span class="badge ${relColors[item.relation]||'b-gray'}">${item.role}</span>
+          ${age?`<span class="badge b-gray">${age} tahun</span>`:''}
+        </div>
+        ${bd?`<div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${daysUntilBd<=30?'var(--gold)':'var(--text3)'};margin:4px 0">${daysUntilBd<=7?'🎂 ':''}${bd.toLocaleDateString('id-ID',{day:'numeric',month:'long'})} ${daysUntilBd<=30?`· ${daysUntilBd} hari lagi`:''}</div>`:''}
+        ${item.phone?`<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3);margin-top:4px">📞 ${item.phone}</div>`:''}
+        ${item.notes?`<div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5;font-style:italic">${item.notes}</div>`:''}
+        <div class="item-actions" style="position:absolute;top:12px;right:12px">
+          <button class="btn btn-ghost btn-icon" onclick="editItem('family',${item.id})">✎</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteItem('family',${item.id})">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>
+  </div>`;
+}
+
+// ===== CALENDAR =====
+function renderCalendar(search='') {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const items = [...DB.calendar].filter(e=>!search||e.title.toLowerCase().includes(search)).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const upcoming = items.filter(e=>new Date(e.date)>=today);
+  const past = items.filter(e=>new Date(e.date)<today);
+  const typeColors = {penting:'b-red',kerja:'b-blue',bisnis:'b-purple',keluarga:'b-pink',pribadi:'b-gray'};
+
+  return `<div style="max-width:900px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Kalender & Jadwal</div>
+    <div style="font-family:'Playfair Display',serif;font-size:17px;color:var(--gold);margin-bottom:12px">Mendatang</div>
+    <div class="stagger">
+    ${upcoming.map(item=>{
+      const d = new Date(item.date);
+      const diff = Math.ceil((d-today)/(1000*60*60*24));
+      const diffTxt = diff===0?'Hari ini 🔥':diff===1?'Besok':`${diff} hari lagi`;
+      return `<div class="item-card" oncontextmenu="showCtx(event,'calendar',${item.id})" style="${diff<=3?'border-color:rgba(232,90,74,0.3)':''}">
+        <div style="text-align:center;min-width:52px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:8px 6px;flex-shrink:0">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3)">${d.toLocaleDateString('id-ID',{month:'short'}).toUpperCase()}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:26px;color:var(--blue);line-height:1">${d.getDate()}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3)">${d.getFullYear()}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:500;margin-bottom:5px">${item.title}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <span class="badge ${typeColors[item.type]||'b-gray'}">${item.type}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:${diff<=3?'var(--red)':'var(--text3)'}">${diffTxt}</span>
+            ${item.reminder?'<span style="font-size:11px">🔔</span>':''}
+          </div>
+          ${item.notes?`<div style="font-size:12px;color:var(--text3);margin-top:5px;font-style:italic">${item.notes}</div>`:''}
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-ghost btn-icon" onclick="editItem('calendar',${item.id})">✎</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteItem('calendar',${item.id})">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>
+    ${past.length?`
+    <div style="font-family:'Playfair Display',serif;font-size:17px;color:var(--text3);margin:20px 0 12px">Lewat</div>
+    <div>
+    ${past.reverse().map(item=>{
+      const d = new Date(item.date);
+      return `<div class="item-card" style="opacity:0.5" oncontextmenu="showCtx(event,'calendar',${item.id})">
+        <div style="min-width:52px;text-align:center">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3)">${d.toLocaleDateString('id-ID',{month:'short'}).toUpperCase()}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:22px;color:var(--text3);line-height:1">${d.getDate()}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:13px;text-decoration:line-through;color:var(--text2)">${item.title}</div>
+          <span class="badge b-gray">${item.type}</span>
+        </div>
+        <div class="item-actions">
+          <button class="btn btn-danger btn-icon" onclick="deleteItem('calendar',${item.id})">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>`:'' }
+  </div>`;
+}
+
+// ===== CONTACTS =====
+function renderContacts(search='') {
+  const items = DB.contacts.filter(c=>!search||c.name.toLowerCase().includes(search)||c.company?.toLowerCase().includes(search)||c.tag?.toLowerCase().includes(search));
+  const tagColors = {bisnis:'b-blue',investor:'b-gold',kesehatan:'b-green',hukum:'b-purple',pribadi:'b-pink'};
+  const gradients = ['linear-gradient(135deg,#4A9EE8,#7B61FF)','linear-gradient(135deg,#D4A853,#9B6E2A)','linear-gradient(135deg,#52C98F,#4A9EE8)','linear-gradient(135deg,#E87AAA,#9B7FE8)','linear-gradient(135deg,#E85A4A,#D4A853)'];
+  return `<div style="max-width:900px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Orang Penting</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px" class="stagger">
+    ${items.map((item,i)=>{
+      const initials = item.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+      return `<div class="card" oncontextmenu="showCtx(event,'contacts',${item.id})" style="position:relative">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:48px;height:48px;border-radius:50%;${gradients[i%gradients.length].replace('linear-gradient','background:linear-gradient')};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0">${initials}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:600">${item.name}</div>
+            <div style="font-size:12px;color:var(--text3)">${item.role}${item.company?` · ${item.company}`:''}</div>
+            <span class="badge ${tagColors[item.tag]||'b-gray'}" style="margin-top:5px">${item.tag}</span>
+          </div>
+        </div>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">
+          ${item.phone?`<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)">📞 ${item.phone}</div>`:''}
+          ${item.email?`<div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)">✉ ${item.email}</div>`:''}
+          ${item.lastContact?`<div style="font-size:11px;color:var(--text3)">Terakhir kontak: ${new Date(item.lastContact).toLocaleDateString('id-ID',{day:'numeric',month:'long'})}</div>`:''}
+        </div>
+        ${item.notes?`<div style="font-size:11px;color:var(--text3);margin-top:8px;font-style:italic;border-top:1px solid var(--border);padding-top:8px">${item.notes}</div>`:''}
+        <div class="item-actions" style="position:absolute;top:12px;right:12px">
+          <button class="btn btn-ghost btn-icon" onclick="editItem('contacts',${item.id})">✎</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteItem('contacts',${item.id})">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
+    </div>
+  </div>`;
+}
+
+// ===== CREDENTIALS =====
+function renderCredentials(search='') {
+  const items = DB.credentials.filter(c=>!search||c.service.toLowerCase().includes(search)||c.category?.toLowerCase().includes(search));
+  const catColors = {email:'b-blue',keuangan:'b-gold',sosial:'b-pink',server:'b-red',lainnya:'b-gray'};
+  return `<div style="max-width:800px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:12px">Password Manager</div>
+    <div style="background:var(--red-dim);border:1px solid rgba(232,90,74,0.2);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:20px;font-size:12px;color:var(--red);display:flex;gap:8px;align-items:center">
+      <span style="font-size:16px">🔒</span>
+      <div><strong>Keamanan:</strong> Data tersimpan di browser Anda. Jangan gunakan di perangkat publik. Pastikan tidak ada yang melihat layar Anda saat menampilkan password.</div>
+    </div>
+    <div class="stagger">
+    ${items.map(item=>`
+      <div class="item-card" oncontextmenu="showCtx(event,'credentials',${item.id})">
+        <div style="width:40px;height:40px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🔑</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <div style="font-size:14px;font-weight:600">${item.service}</div>
+            <span class="badge ${catColors[item.category]||'b-gray'}">${item.category||'lainnya'}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:3px">USERNAME</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)">${item.username}</div>
+            </div>
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:3px">PASSWORD</div>
+              <div class="cred-mask ${item.visible?'revealed':''}" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)">${item.visible?item.password:'••••••••••••'}</div>
+            </div>
+          </div>
+          ${item.notes?`<div style="font-size:11px;color:var(--text3);margin-top:6px;font-style:italic">${item.notes}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <button class="btn btn-ghost btn-icon" onclick="toggleCred(${item.id})" title="${item.visible?'Sembunyikan':'Tampilkan'}">${item.visible?'🙈':'👁'}</button>
+          ${item.visible?`<button class="btn btn-ghost btn-icon" onclick="copyCred('${item.password}')" title="Copy password">⎘</button>`:''}
+          <button class="btn btn-ghost btn-icon" onclick="editItem('credentials',${item.id})">✎</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteItem('credentials',${item.id})">✕</button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function toggleCred(id) {
+  const item = DB.credentials.find(c=>c.id===id);
+  if(item) { item.visible = !item.visible; saveDB(); renderContent('credentials',''); }
+}
+function copyCred(pw) {
+  navigator.clipboard.writeText(pw).then(()=>showToast('Password disalin!','success')).catch(()=>showToast('Gagal menyalin','error'));
+}
+
+// ===== DATA =====
+function renderData(search='') {
+  const items = DB.data.filter(d=>!search||d.title.toLowerCase().includes(search)||d.category?.toLowerCase().includes(search));
+  const cats = [...new Set(items.map(d=>d.category))];
+  const catIcons = {Identitas:'🪪',Pajak:'🏛',Keuangan:'💳',Asuransi:'🛡',Kendaraan:'🚗',Properti:'🏠',Lainnya:'📄'};
+  return `<div style="max-width:900px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Data Penting</div>
+    ${cats.map(cat=>`
+      <div style="margin-bottom:20px">
+        <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px">${catIcons[cat]||'📄'} ${cat.toUpperCase()}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px">
+          ${items.filter(d=>d.category===cat).map(item=>`
+            <div class="card" style="position:relative" oncontextmenu="showCtx(event,'data',${item.id})">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:4px">${item.title.toUpperCase()}</div>
+              <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--gold);margin-bottom:4px">${item.value}</div>
+              ${item.notes?`<div style="font-size:11px;color:var(--text3);font-style:italic">${item.notes}</div>`:''}
+              <div class="item-actions" style="position:absolute;top:10px;right:10px">
+                <button class="btn btn-ghost btn-icon" style="width:26px;height:26px" onclick="copyCred('${item.value}')" title="Salin">⎘</button>
+                <button class="btn btn-ghost btn-icon" style="width:26px;height:26px" onclick="editItem('data',${item.id})">✎</button>
+                <button class="btn btn-danger btn-icon" style="width:26px;height:26px" onclick="deleteItem('data',${item.id})">✕</button>
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
+
+// ===== PLANS =====
+function renderPlans(search='') {
+  const items = DB.plans.filter(p=>!search||p.title.toLowerCase().includes(search));
+  const statusConfig = {aktif:{color:'var(--green)',badge:'b-green'},riset:{color:'var(--blue)',badge:'b-blue'},planning:{color:'var(--gold)',badge:'b-gold'},selesai:{color:'var(--text3)',badge:'b-gray'}};
+  const prioColors = {tinggi:'var(--red)',sedang:'var(--gold)',rendah:'var(--green)'};
+  return `<div style="max-width:900px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Rencana Pengembangan</div>
+    <div class="stagger">
+    ${items.map(item=>{
+      const sc = statusConfig[item.status]||statusConfig.riset;
+      const miles = item.milestones||[];
+      return `<div class="card" style="border-left:3px solid ${sc.color};margin-bottom:14px" oncontextmenu="showCtx(event,'plans',${item.id})">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-family:'Playfair Display',serif;font-size:18px;margin-bottom:4px;line-height:1.3">${item.title}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <span class="badge ${sc.badge}">${item.status}</span>
+              <span class="badge b-gray" style="font-size:9px">Prioritas: ${item.priority||'sedang'}</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue)">📅 ${item.phase}</span>
+            </div>
+          </div>
+          <div class="item-actions" style="opacity:1">
+            <button class="btn btn-ghost btn-icon" onclick="editItem('plans',${item.id})">✎</button>
+            <button class="btn btn-danger btn-icon" onclick="deleteItem('plans',${item.id})">✕</button>
+          </div>
+        </div>
+        ${item.details?`<div style="font-size:13px;color:var(--text2);margin:8px 0;line-height:1.6">${item.details}</div>`:''}
+        ${miles.length?`
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:8px;letter-spacing:0.08em">MILESTONE</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              ${miles.map((m,mi)=>`<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--bg);border:1px solid var(--border);color:var(--text3)">
+                <span style="color:${sc.color};margin-right:4px">${mi+1}.</span>${m}
+              </span>`).join('')}
+            </div>
+          </div>`:'' }
+      </div>`;
+    }).join('')}
+    </div>
+  </div>`;
+}
+
+// ===== NOTES =====
+function renderNotes(search='') {
+  const items = DB.notes.filter(n=>!search||n.title.toLowerCase().includes(search));
+  const colorMap = {gold:'var(--gold)',blue:'var(--blue)',green:'var(--green)',purple:'var(--purple)',red:'var(--red)'};
+  return `<div style="max-width:900px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Catatan Cepat</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px" class="stagger">
+    ${items.map(item=>`
+      <div class="card" style="border-top:3px solid ${colorMap[item.color]||'var(--gold)'};position:relative">
+        ${item.pinned?'<div style="position:absolute;top:12px;right:42px;font-size:14px">📌</div>':''}
+        <div style="font-size:15px;font-weight:600;margin-bottom:8px;padding-right:24px">${item.title}</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${item.content}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-top:10px">${new Date(item.created).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</div>
+        <div class="item-actions" style="position:absolute;top:10px;right:10px">
+          <button class="btn btn-ghost btn-icon" style="width:26px;height:26px" onclick="editItem('notes',${item.id})">✎</button>
+          <button class="btn btn-danger btn-icon" style="width:26px;height:26px" onclick="deleteItem('notes',${item.id})">✕</button>
+        </div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ===== SETTINGS =====
+function renderSettings() {
+  return `<div style="max-width:700px">
+    <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:24px">Pengaturan & Profil</div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:16px">PROFIL ANDA</div>
+      <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
+        <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--blue));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700">${USER.initial}</div>
+        <div>
+          <div style="font-family:'Playfair Display',serif;font-size:20px">${USER.name}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text3)">${USER.role}</div>
+        </div>
+      </div>
+      <div class="input-group"><label class="input-label">NAMA LENGKAP</label><input class="input" id="set-name" value="${USER.name}"></div>
+      <div class="input-group"><label class="input-label">PERAN / JABATAN</label><input class="input" id="set-role" value="${USER.role}"></div>
+      <button class="btn btn-primary" onclick="saveSettings()">Simpan Perubahan</button>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:16px">STATISTIK DATA</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        ${[['Pekerjaan',DB.work.length,'⚡'],['Bisnis',DB.business.length,'💼'],['Keluarga',DB.family.length,'🏡'],['Event',DB.calendar.length,'📅'],['Kontak',DB.contacts.length,'👥'],['Rencana',DB.plans.length,'🎯']].map(([l,n,i])=>`
+          <div style="text-align:center;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)">
+            <div>${i}</div>
+            <div style="font-family:'Playfair Display',serif;font-size:26px;color:var(--gold)">${n}</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3)">${l.toUpperCase()}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:16px">MANAJEMEN DATA</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="exportData()">📤 Export Data (JSON)</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">📥 Import Data</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+        <button class="btn btn-danger" onclick="if(confirm('Reset semua data? Tindakan ini tidak bisa dibatalkan!'))resetData()">🗑 Reset Semua Data</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function saveSettings() {
+  USER.name = document.getElementById('set-name').value.trim() || USER.name;
+  USER.role = document.getElementById('set-role').value.trim() || USER.role;
+  USER.initial = USER.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  saveUser(); updateProfile();
+  showToast('Profil diperbarui!','success');
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify({USER,DB},null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `personalhub-backup-${Date.now()}.json`; a.click();
+  showToast('Data berhasil diekspor!','success');
+}
+function importData(e) {
+  const file = e.target.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const d = JSON.parse(ev.target.result);
+      if(d.DB) { DB = d.DB; saveDB(); }
+      if(d.USER) { USER = d.USER; saveUser(); updateProfile(); }
+      renderContent(ACTIVE,'');
+      showToast('Data berhasil diimpor!','success');
+    } catch { showToast('Format file tidak valid','error'); }
+  };
+  r.readAsText(file);
+}
+function resetData() { localStorage.clear(); location.reload(); }
+
+// ===== MODAL =====
+const FORM_FIELDS = {
+  work:[
+    {k:'title',l:'Judul Tugas',t:'text',required:true},
+    {k:'priority',l:'Prioritas',t:'select',opts:[['tinggi','Tinggi'],['sedang','Sedang'],['rendah','Rendah']]},
+    {k:'status',l:'Status',t:'select',opts:[['todo','To Do'],['proses','In Progress'],['selesai','Selesai']]},
+    {k:'due',l:'Tenggat Waktu',t:'date'},
+    {k:'tags',l:'Tags (pisahkan koma)',t:'text'},
+    {k:'notes',l:'Catatan',t:'textarea'},
+  ],
+  business:[
+    {k:'title',l:'Judul / Agenda',t:'text',required:true},
+    {k:'category',l:'Kategori',t:'select',opts:[['Strategi','Strategi'],['Keuangan','Keuangan'],['Operasional','Operasional'],['Produk','Produk'],['Marketing','Marketing']]},
+    {k:'status',l:'Status',t:'select',opts:[['aktif','Aktif'],['pipeline','Pipeline'],['planning','Planning'],['selesai','Selesai']]},
+    {k:'progress',l:'Progress (%)',t:'number'},
+    {k:'notes',l:'Detail / Catatan',t:'textarea'},
+  ],
+  family:[
+    {k:'name',l:'Nama Lengkap',t:'text',required:true},
+    {k:'role',l:'Peran / Sebutan',t:'text'},
+    {k:'relation',l:'Hubungan',t:'select',opts:[['pasangan','Pasangan'],['anak','Anak'],['orang tua','Orang Tua'],['saudara','Saudara'],['lainnya','Lainnya']]},
+    {k:'phone',l:'No. Telepon',t:'tel'},
+    {k:'email',l:'Email',t:'email'},
+    {k:'birthday',l:'Tanggal Lahir',t:'date'},
+    {k:'notes',l:'Catatan',t:'textarea'},
+  ],
+  calendar:[
+    {k:'title',l:'Judul Event',t:'text',required:true},
+    {k:'date',l:'Tanggal',t:'date',required:true},
+    {k:'type',l:'Tipe',t:'select',opts:[['penting','Penting'],['kerja','Kerja'],['bisnis','Bisnis'],['keluarga','Keluarga'],['pribadi','Pribadi']]},
+    {k:'priority',l:'Prioritas',t:'select',opts:[['penting','Penting'],['normal','Normal']]},
+    {k:'reminder',l:'Pengingat',t:'checkbox'},
+    {k:'notes',l:'Catatan / Lokasi',t:'textarea'},
+  ],
+  contacts:[
+    {k:'name',l:'Nama Lengkap',t:'text',required:true},
+    {k:'role',l:'Jabatan',t:'text'},
+    {k:'company',l:'Perusahaan / Institusi',t:'text'},
+    {k:'phone',l:'No. Telepon',t:'tel'},
+    {k:'email',l:'Email',t:'email'},
+    {k:'tag',l:'Kategori',t:'select',opts:[['bisnis','Bisnis'],['investor','Investor'],['kesehatan','Kesehatan'],['hukum','Hukum'],['pribadi','Pribadi'],['pemerintah','Pemerintah']]},
+    {k:'lastContact',l:'Terakhir Kontak',t:'date'},
+    {k:'notes',l:'Catatan',t:'textarea'},
+  ],
+  credentials:[
+    {k:'service',l:'Layanan / Platform',t:'text',required:true},
+    {k:'category',l:'Kategori',t:'select',opts:[['email','Email'],['keuangan','Keuangan'],['sosial','Media Sosial'],['server','Server / Cloud'],['lainnya','Lainnya']]},
+    {k:'username',l:'Username / Email',t:'text'},
+    {k:'password',l:'Password',t:'password'},
+    {k:'notes',l:'Catatan Keamanan',t:'textarea'},
+  ],
+  data:[
+    {k:'title',l:'Nama Data',t:'text',required:true},
+    {k:'value',l:'Nilai / Nomor',t:'text',required:true},
+    {k:'category',l:'Kategori',t:'select',opts:[['Identitas','Identitas'],['Pajak','Pajak'],['Keuangan','Keuangan'],['Asuransi','Asuransi'],['Kendaraan','Kendaraan'],['Properti','Properti'],['Lainnya','Lainnya']]},
+    {k:'notes',l:'Keterangan',t:'textarea'},
+  ],
+  plans:[
+    {k:'title',l:'Judul Rencana',t:'text',required:true},
+    {k:'phase',l:'Target Waktu (mis: Q3 2026)',t:'text'},
+    {k:'status',l:'Status',t:'select',opts:[['aktif','Aktif'],['riset','Riset'],['planning','Planning'],['selesai','Selesai']]},
+    {k:'priority',l:'Prioritas',t:'select',opts:[['tinggi','Tinggi'],['sedang','Sedang'],['rendah','Rendah']]},
+    {k:'details',l:'Detail Rencana',t:'textarea'},
+    {k:'milestones',l:'Milestone (pisahkan koma)',t:'text'},
+  ],
+  notes:[
+    {k:'title',l:'Judul Catatan',t:'text',required:true},
+    {k:'content',l:'Isi Catatan',t:'textarea'},
+    {k:'color',l:'Warna',t:'select',opts:[['gold','Emas'],['blue','Biru'],['green','Hijau'],['purple','Ungu'],['red','Merah']]},
+    {k:'pinned',l:'Pin di atas',t:'checkbox'},
+  ],
+};
+
+const SECTION_LABELS = {
+  dashboard:'Dashboard',work:'Pekerjaan',business:'Bisnis',family:'Keluarga',
+  calendar:'Kalender',contacts:'Kontak',credentials:'Kredensial',data:'Data Penting',plans:'Rencana',notes:'Catatan'
+};
+
+function openAddModal() {
+  MODAL_MODE = 'add'; MODAL_EDIT_ID = null;
+  const fields = FORM_FIELDS[ACTIVE]||[];
+  document.getElementById('modal-title').textContent = `Tambah ${SECTION_LABELS[ACTIVE]}`;
+  document.getElementById('modal-sub').textContent = 'ISI FORM DI BAWAH';
+  document.getElementById('modal-save-btn').textContent = 'Simpan';
+  document.getElementById('modal-body').innerHTML = renderFormFields(fields, {});
+  document.getElementById('modal').classList.add('open');
+}
+
+function editItem(section, id) {
+  MODAL_MODE = 'edit'; MODAL_EDIT_ID = id;
+  const item = DB[section]?.find(x=>x.id===id);
+  if(!item) return;
+  const fields = FORM_FIELDS[section]||[];
+  document.getElementById('modal-title').textContent = `Edit ${SECTION_LABELS[section]}`;
+  document.getElementById('modal-sub').textContent = 'PERBARUI DATA';
+  document.getElementById('modal-save-btn').textContent = 'Perbarui';
+  document.getElementById('modal-body').innerHTML = renderFormFields(fields, item);
+  document.getElementById('modal').classList.add('open');
+}
+
+function renderFormFields(fields, data={}) {
+  return fields.map(f => {
+    const val = data[f.k];
+    if(f.t==='checkbox') {
+      return `<div class="input-group" style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <input type="checkbox" id="f_${f.k}" ${val?'checked':''} style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer">
+        <label for="f_${f.k}" style="font-size:13px;cursor:pointer">${f.l}</label>
+      </div>`;
+    }
+    if(f.t==='select') {
+      return `<div class="input-group"><label class="input-label">${f.l.toUpperCase()}</label>
+        <select class="input" id="f_${f.k}">
+          <option value="">Pilih...</option>
+          ${f.opts.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('')}
+        </select></div>`;
+    }
+    if(f.t==='textarea') {
+      const tv = Array.isArray(val) ? val.join(', ') : (val||'');
+      return `<div class="input-group"><label class="input-label">${f.l.toUpperCase()}</label>
+        <textarea class="input" id="f_${f.k}" rows="3">${tv}</textarea></div>`;
+    }
+    const textVal = Array.isArray(val) ? val.join(', ') : (val||'');
+    return `<div class="input-group"><label class="input-label">${f.l.toUpperCase()}${f.required?' *':''}</label>
+      <input class="input" type="${f.t}" id="f_${f.k}" value="${textVal}" placeholder="${f.required?'Wajib diisi':''}"></div>`;
+  }).join('');
+}
+
+function saveModal() {
+  const section = ACTIVE;
+  const fields = FORM_FIELDS[section]||[];
+  const item = {};
+  let valid = true;
+  fields.forEach(f => {
+    const el = document.getElementById('f_'+f.k);
+    if(!el) return;
+    if(f.t==='checkbox') { item[f.k] = el.checked; return; }
+    const val = el.value.trim();
+    if(f.required && !val) { el.style.borderColor='var(--red)'; valid=false; return; }
+    if(f.k==='tags'||f.k==='milestones') {
+      item[f.k] = val ? val.split(',').map(s=>s.trim()).filter(Boolean) : [];
+    } else if(f.k==='progress') {
+      item[f.k] = parseInt(val)||0;
+    } else { item[f.k] = val; }
+  });
+  if(!valid) { showToast('Harap isi semua field yang wajib','error'); return; }
+  if(MODAL_MODE==='add') {
+    item.id = Date.now();
+    if(section==='notes') item.created = new Date().toISOString().split('T')[0];
+    DB[section] = [...(DB[section]||[]), item];
+    showToast(`${SECTION_LABELS[section]} berhasil ditambahkan!`,'success');
+  } else {
+    DB[section] = DB[section].map(x=>x.id===MODAL_EDIT_ID?{...x,...item}:x);
+    showToast('Data berhasil diperbarui!','success');
+  }
+  saveDB(); closeModal(); renderContent(section,''); renderSidebar(section,'');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+document.getElementById('modal').addEventListener('click', e => { if(e.target===document.getElementById('modal')) closeModal(); });
+
+// ===== DELETE =====
+function deleteItem(section, id) {
+  if(!confirm('Hapus item ini?')) return;
+  DB[section] = DB[section].filter(x=>x.id!==id);
+  saveDB(); renderContent(section,''); renderSidebar(section,'');
+  showToast('Item dihapus','info');
+}
+
+// ===== CONTEXT MENU =====
+function showCtx(e, section, id) {
+  e.preventDefault();
+  const menu = document.getElementById('ctx-menu');
+  menu.style.display = 'block';
+  menu.style.left = e.pageX+'px';
+  menu.style.top = Math.min(e.pageY, window.innerHeight-150)+'px';
+  menu.innerHTML = `
+    <div class="cm-item" onclick="editItem('${section}',${id});hideCtx()">✎ Edit</div>
+    <div class="cm-item" onclick="sendQuick('Analisis dan berikan insight untuk item ini: ${DB[section]?.find(x=>x.id===id)?.title||''}');toggleAI();hideCtx()">🤖 Analisis dengan AI</div>
+    <div class="cm-item danger" onclick="deleteItem('${section}',${id});hideCtx()">✕ Hapus</div>`;
+  document.addEventListener('click', hideCtx, {once:true});
+}
+function hideCtx() { document.getElementById('ctx-menu').style.display='none'; }
+
+// ===== ATTACH HANDLERS =====
+function attachHandlers() {
+  // Already handled via onclick inline
+}
+
+// ===== TOAST =====
+function showToast(msg, type='success') {
+  const container = document.getElementById('toast');
+  const t = document.createElement('div');
+  t.className = `toast-item toast-${type}`;
+  const icons = {success:'✓',error:'✕',info:'ℹ'};
+  t.innerHTML = `<span>${icons[type]||'•'}</span>${msg}`;
+  container.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';setTimeout(()=>t.remove(),300);},2500);
+}
+
+// ===== AI ASSISTANT =====
+async function sendAI() {
+  const input = document.getElementById('ai-input');
+  const msg = input.value.trim();
+  if(!msg) return;
+  input.value = '';
+  input.style.height = '38px';
+  addAIMsg(msg, 'user');
+  document.getElementById('ai-quick-prompts').style.display = 'none';
+  // Typing indicator
+  const typingId = 'typing-'+Date.now();
+  const msgsEl = document.getElementById('ai-messages');
+  msgsEl.innerHTML += `<div id="${typingId}" class="ai-msg assistant"><div class="ai-badge">✦ CLAUDE</div><div class="ai-typing"><span></span><span></span><span></span></div></div>`;
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+
+  const ctx = buildAIContext();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system: `Anda adalah AI Assistant personal untuk ${USER.name} (${USER.role}). Anda memiliki akses ke data Personal Hub mereka. Berikan jawaban yang personal, actionable, dan ringkas dalam Bahasa Indonesia. Data saat ini:\n${ctx}`,
+        messages:[{role:'user',content:msg}]
+      })
+    });
+    const d = await res.json();
+    document.getElementById(typingId)?.remove();
+    const text = d.content?.[0]?.text || 'Maaf, terjadi kesalahan. Coba lagi.';
+    addAIMsg(text, 'assistant');
+  } catch(err) {
+    document.getElementById(typingId)?.remove();
+    addAIMsg('Maaf, tidak dapat terhubung ke AI saat ini. Pastikan koneksi internet tersedia.', 'assistant');
+  }
+}
+
+function buildAIContext() {
+  const today = new Date();
+  const activeWork = DB.work.filter(w=>w.status!=='selesai');
+  const upcoming = DB.calendar.filter(e=>new Date(e.date)>=today).slice(0,5);
+  return JSON.stringify({
+    pekerjaan_aktif: activeWork.map(w=>({judul:w.title,prioritas:w.priority,status:w.status,tenggat:w.due})),
+    event_mendatang: upcoming.map(e=>({judul:e.title,tanggal:e.date,tipe:e.type})),
+    bisnis: DB.business.map(b=>({judul:b.title,status:b.status,progress:b.progress})),
+    rencana: DB.plans.map(p=>({judul:p.title,fase:p.phase,status:p.status})),
+    statistik: {total_tugas:DB.work.length,selesai:DB.work.filter(w=>w.status==='selesai').length,total_kontak:DB.contacts.length}
+  });
+}
+
+function addAIMsg(text, role) {
+  const el = document.getElementById('ai-messages');
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  if(role==='assistant') {
+    div.innerHTML = `<div class="ai-badge">✦ CLAUDE</div><div>${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>')}</div>`;
+  } else {
+    div.textContent = text;
+  }
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function sendQuick(prompt) {
+  document.getElementById('ai-input').value = prompt;
+  if(!AI_OPEN) toggleAI();
+  sendAI();
+}
+
+function aiKeydown(e) {
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAI();}
+}
+
+function autoResize(el) {
+  el.style.height = '38px';
+  el.style.height = Math.min(el.scrollHeight, 100)+'px';
+}
+
+// ===== START =====
+init();
+</script>
+</body>
+</html>

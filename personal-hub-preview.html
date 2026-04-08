@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0D0D10; color: #E8E4DC; font-family: 'Georgia', serif; height: 100vh; overflow: hidden; display: flex; }
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+/* Sidebar */
+#sidebar { width: 220px; background: #0A0A0E; border-right: 1px solid #1A1A24; display: flex; flex-direction: column; transition: width 0.3s; flex-shrink: 0; overflow: hidden; }
+#sidebar.collapsed { width: 60px; }
+.sidebar-header { padding: 20px 16px; border-bottom: 1px solid #1A1A24; display: flex; align-items: center; gap: 10px; }
+.logo { width: 32px; height: 32px; background: linear-gradient(135deg, #C8A97E, #7E98C8); border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.logo-text { overflow: hidden; }
+.logo-title { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: #E8E4DC; white-space: nowrap; }
+.logo-sub { font-family: 'DM Mono', monospace; font-size: 9px; color: #555; letter-spacing: 0.12em; white-space: nowrap; }
+nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 6px; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 0.05em; color: #666; transition: all 0.2s; border-left: 2px solid transparent; white-space: nowrap; overflow: hidden; }
+.nav-item:hover { background: rgba(200,169,126,0.08); color: #C8A97E; }
+.nav-item.active { background: rgba(200,169,126,0.12); color: #C8A97E; border-left-color: #C8A97E; }
+.nav-icon { font-size: 14px; flex-shrink: 0; }
+.sidebar-footer { padding: 12px 8px; border-top: 1px solid #1A1A24; }
+#sidebar.collapsed .nav-label, #sidebar.collapsed .logo-text { display: none; }
+#sidebar.collapsed .nav-item { justify-content: center; padding: 10px; }
+
+/* Main */
+#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+#topbar { padding: 16px 28px; border-bottom: 1px solid #1A1A24; background: #0A0A0E; display: flex; align-items: center; gap: 16px; }
+.topbar-info { flex: 1; }
+.topbar-date { font-family: 'DM Mono', monospace; font-size: 10px; color: #555; letter-spacing: 0.12em; margin-bottom: 2px; }
+.topbar-section { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: #E8E4DC; font-style: italic; font-weight: 300; }
+.search { background: #0D0D10; border: 1px solid #2A2A38; border-radius: 6px; color: #E8E4DC; padding: 8px 12px; font-family: 'DM Mono', monospace; font-size: 11px; width: 200px; outline: none; }
+.search:focus { border-color: #C8A97E; }
+.btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.08em; transition: all 0.2s; }
+.btn-gold { background: rgba(200,169,126,0.15); color: #C8A97E; border: 1px solid rgba(200,169,126,0.3); }
+.btn-gold:hover { background: rgba(200,169,126,0.25); }
+.btn-danger { background: rgba(200,80,80,0.1); color: #C85050; border: 1px solid rgba(200,80,80,0.2); font-size: 10px; padding: 4px 10px; }
+.btn-danger:hover { background: rgba(200,80,80,0.2); }
+.btn-sm { padding: 4px 10px; font-size: 10px; }
+
+/* Content */
+#content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+/* Cards & Items */
+.card { background: #13131A; border: 1px solid #1E1E28; border-radius: 10px; padding: 20px; transition: border-color 0.2s; }
+.card:hover { border-color: #2E2E3E; }
+.stat-card { background: #13131A; border: 1px solid #1E1E28; border-radius: 10px; padding: 16px 20px; flex: 1; cursor: pointer; transition: border-color 0.2s; }
+.stat-card:hover { border-color: #C8A97E; }
+.item-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; background: #0D0D10; border-radius: 8px; border: 1px solid #1A1A24; margin-bottom: 8px; transition: border-color 0.2s; }
+.item-row:hover { border-color: #2A2A38; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
+.tag-tinggi { background: rgba(200,80,80,0.15); color: #C85050; }
+.tag-sedang { background: rgba(200,169,126,0.15); color: #C8A97E; }
+.tag-rendah { background: rgba(126,200,158,0.15); color: #7EC89E; }
+.tag-todo { background: rgba(126,152,200,0.15); color: #7E98C8; }
+.tag-proses { background: rgba(200,169,126,0.15); color: #C8A97E; }
+.tag-selesai { background: rgba(126,200,158,0.15); color: #7EC89E; }
+.tag-green { background: rgba(126,200,158,0.15); color: #7EC89E; }
+.section-title { font-family: 'Cormorant Garamond', serif; font-size: 18px; margin-bottom: 16px; }
+.mono { font-family: 'DM Mono', monospace; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.modal-overlay.open { display: flex; }
+.modal { background: #13131A; border: 1px solid #2A2A38; border-radius: 12px; padding: 28px; width: 460px; max-height: 80vh; overflow-y: auto; }
+.input { background: #0D0D10; border: 1px solid #2A2A38; border-radius: 6px; color: #E8E4DC; padding: 8px 12px; font-family: 'DM Mono', monospace; font-size: 12px; width: 100%; outline: none; transition: border-color 0.2s; }
+.input:focus { border-color: #C8A97E; }
+select.input, textarea.input { cursor: pointer; }
+textarea.input { resize: vertical; min-height: 70px; }
+.form-label { font-family: 'DM Mono', monospace; font-size: 10px; color: #666; margin-bottom: 5px; letter-spacing: 0.08em; }
+.form-group { margin-bottom: 14px; }
+
+/* Toast */
+#toast { position: fixed; bottom: 24px; right: 24px; padding: 10px 20px; border-radius: 8px; font-family: 'DM Mono', monospace; font-size: 12px; z-index: 200; display: none; background: rgba(126,200,158,0.15); border: 1px solid #7EC89E; color: #7EC89E; }
+#toast.show { display: block; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Avatar */
+.avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Cormorant Garamond', serif; font-size: 18px; color: #fff; flex-shrink: 0; }
+
+/* Date box */
+.date-box { text-align: center; min-width: 48px; background: #0D0D10; border: 1px solid #2A2A38; border-radius: 8px; padding: 8px 4px; }
+
+/* Data grid */
+.data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* Warning */
+.warning { background: rgba(200,80,80,0.08); border: 1px solid rgba(200,80,80,0.2); border-radius: 8px; padding: 12px 16px; font-family: 'DM Mono', monospace; font-size: 11px; color: #C85050; margin-bottom: 16px; }
+
+/* Plan bar */
+.plan-bar { width: 4px; border-radius: 2px; background: #C8A97E; align-self: stretch; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">⌘</div>
+    <div class="logo-text">
+      <div class="logo-title">Personal Hub</div>
+      <div class="logo-sub">COMMAND CENTER</div>
+    </div>
+  </div>
+  <nav id="nav"></nav>
+  <div class="sidebar-footer">
+    <div class="nav-item" onclick="toggleSidebar()">
+      <span class="nav-icon" id="toggle-icon">←</span>
+      <span class="nav-label">Tutup</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-info">
+      <div class="topbar-date" id="today-date"></div>
+      <div class="topbar-section" id="section-title">Dashboard</div>
+    </div>
+    <input class="search" placeholder="Cari..." id="search-input" oninput="renderActive()">
+    <button class="btn btn-gold" id="add-btn" style="display:none" onclick="openModal()">+ Tambah</button>
+  </div>
+  <div id="content"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;margin-bottom:20px;color:#E8E4DC" id="modal-title">Tambah Item</div>
+    <div id="modal-fields"></div>
+    <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+      <button class="btn" style="background:transparent;color:#555;border:1px solid #2A2A38" onclick="closeModal()">Batal</button>
+      <button class="btn btn-gold" onclick="saveItem()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">Item berhasil ditambahkan!</div>
+
+<script>
+const SECTIONS = [
+  { id:"dashboard", label:"Dashboard", icon:"⌂" },
+  { id:"work", label:"Pekerjaan", icon:"◈" },
+  { id:"business", label:"Bisnis", icon:"◆" },
+  { id:"family", label:"Keluarga", icon:"❧" },
+  { id:"calendar", label:"Kalender", icon:"◉" },
+  { id:"contacts", label:"Kontak", icon:"◎" },
+  { id:"credentials", label:"Kredensial", icon:"⬡" },
+  { id:"data", label:"Data Penting", icon:"◫" },
+  { id:"plans", label:"Rencana", icon:"◐" },
+];
+
+let active = "dashboard";
+let sidebarOpen = true;
+
+let DB = {
+  work: [
+    { id:1, title:"Review laporan Q1", priority:"tinggi", status:"proses", due:"2026-03-30", notes:"Cek dengan tim finance" },
+    { id:2, title:"Meeting klien Rabu", priority:"tinggi", status:"todo", due:"2026-04-02", notes:"" },
+    { id:3, title:"Update presentasi produk", priority:"sedang", status:"todo", due:"2026-04-10", notes:"Tambahkan slide ROI" },
+    { id:4, title:"Kirim invoice bulan ini", priority:"sedang", status:"selesai", due:"2026-03-25", notes:"" },
+  ],
+  business: [
+    { id:1, title:"Strategi pemasaran Q2", category:"Strategi", notes:"Target: 20% pertumbuhan, fokus digital marketing" },
+    { id:2, title:"Rapat investor Seri A", category:"Keuangan", notes:"Siapkan deck presentasi & proyeksi 3 tahun" },
+    { id:3, title:"Partnership dengan distributor baru", category:"Operasional", notes:"Follow up minggu depan" },
+  ],
+  family: [
+    { id:1, name:"Anisa Rahma", role:"Istri", phone:"+62812-3456-7890", notes:"Anniversary 12 Juli" },
+    { id:2, name:"Rafif Al-Ghani", role:"Anak", phone:"", notes:"Kelas 4 SD, les piano Sabtu" },
+    { id:3, name:"Siti Nurhaliza", role:"Ibu", phone:"+62821-9876-5432", notes:"Tinggal di Bandung" },
+  ],
+  calendar: [
+    { id:1, title:"Ulang tahun Anisa", date:"2026-07-12", type:"penting", reminder:true },
+    { id:2, title:"Review tahunan perusahaan", date:"2026-04-15", type:"kerja", reminder:true },
+    { id:3, title:"Rapat investor", date:"2026-04-08", type:"kerja", reminder:true },
+    { id:4, title:"Liburan keluarga ke Bali", date:"2026-06-20", type:"keluarga", reminder:false },
+    { id:5, title:"Deadline pajak tahunan", date:"2026-03-31", type:"penting", reminder:true },
+  ],
+  contacts: [
+    { id:1, name:"Budi Santoso", role:"Direktur", company:"PT Maju Jaya", phone:"+62811-222-333", email:"budi@majujaya.com", tag:"bisnis" },
+    { id:2, name:"Dr. Hendra Wijaya", role:"Dokter Keluarga", company:"RS Bunda", phone:"+62855-444-555", email:"", tag:"pribadi" },
+    { id:3, name:"Rina Kusuma", role:"Akuntan", company:"KAP Sejahtera", phone:"+62877-666-777", email:"rina@kap.com", tag:"bisnis" },
+  ],
+  credentials: [
+    { id:1, service:"Email Utama (Gmail)", username:"", password:"", notes:"", visible:false },
+    { id:2, service:"Internet Banking", username:"", password:"", notes:"", visible:false },
+    { id:3, service:"LinkedIn", username:"", password:"", notes:"", visible:false },
+  ],
+  data: [
+    { id:1, title:"No. KTP", value:"3201xxxxxxxxxxxx", category:"Identitas", notes:"Berlaku seumur hidup" },
+    { id:2, title:"No. NPWP", value:"12.345.678.9-xxx.xxx", category:"Pajak", notes:"Terdaftar KPP Pratama Jakarta" },
+    { id:3, title:"No. Rekening BCA", value:"0123456789", category:"Keuangan", notes:"Cabang Sudirman" },
+    { id:4, title:"No. BPJS Kesehatan", value:"0001234567890", category:"Asuransi", notes:"Kelas 1" },
+  ],
+  plans: [
+    { id:1, title:"Ekspansi bisnis ke Surabaya", phase:"Q3 2026", status:"perencanaan", details:"Cari lokasi strategis, rekrut 5 staf lokal" },
+    { id:2, title:"Beli rumah kedua untuk investasi", phase:"2027", status:"riset", details:"Budget 2M, target kawasan BSD atau Bekasi" },
+    { id:3, title:"Sertifikasi manajemen (PMP)", phase:"Q4 2026", status:"perencanaan", details:"Daftar kelas online, target lulus Desember" },
+  ],
+};
+
+// Init
+document.getElementById("today-date").textContent = new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).toUpperCase();
+
+function buildNav() {
+  const nav = document.getElementById("nav");
+  nav.innerHTML = SECTIONS.map(s => `
+    <div class="nav-item ${s.id===active?"active":""}" onclick="setSection('${s.id}')">
+      <span class="nav-icon">${s.icon}</span>
+      <span class="nav-label">${s.label}</span>
+    </div>`).join("");
+}
+
+function setSection(id) {
+  active = id;
+  document.getElementById("section-title").textContent = SECTIONS.find(s=>s.id===id).label;
+  document.getElementById("add-btn").style.display = id==="dashboard"?"none":"";
+  document.getElementById("search-input").value = "";
+  buildNav();
+  renderActive();
+}
+
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById("sidebar").classList.toggle("collapsed", !sidebarOpen);
+  document.getElementById("toggle-icon").textContent = sidebarOpen?"←":"→";
+}
+
+function renderActive() {
+  const search = document.getElementById("search-input").value.toLowerCase();
+  const c = document.getElementById("content");
+  const renders = { dashboard:renderDashboard, work:renderWork, business:renderBusiness, family:renderFamily, calendar:renderCalendar, contacts:renderContacts, credentials:renderCredentials, data:renderData, plans:renderPlans };
+  c.innerHTML = (renders[active]||renderDashboard)(search);
+  attachHandlers();
+}
+
+function attachHandlers() {
+  document.querySelectorAll("[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const [sec,id] = btn.dataset.del.split("|");
+      DB[sec] = DB[sec].filter(x=>x.id!=id);
+      showToast("Item dihapus");
+      renderActive();
+    });
+  });
+  document.querySelectorAll("[data-toggle]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = +btn.dataset.toggle;
+      const item = DB.credentials.find(c=>c.id===id);
+      if(item) { item.visible = !item.visible; renderActive(); }
+    });
+  });
+}
+
+// DASHBOARD
+function renderDashboard() {
+  const today = new Date();
+  const upcoming = DB.calendar.filter(e=>new Date(e.date)>=today).sort((a,b)=>new Date(a.date)-new Date(b.date)).slice(0,4);
+  const highPrio = DB.work.filter(w=>w.priority==="tinggi"&&w.status!=="selesai");
+  const stats = [
+    { label:"Tugas Aktif", value:DB.work.filter(w=>w.status!=="selesai").length, color:"#C8A97E", sec:"work" },
+    { label:"Event Mendatang", value:DB.calendar.filter(e=>new Date(e.date)>=today).length, color:"#7EC89E", sec:"calendar" },
+    { label:"Kontak", value:DB.contacts.length, color:"#7E98C8", sec:"contacts" },
+    { label:"Rencana", value:DB.plans.length, color:"#C87EA9", sec:"plans" },
+  ];
+  return `
+    <div style="display:flex;gap:16px;margin-bottom:24px">
+      ${stats.map(s=>`
+        <div class="stat-card" style="border-left:3px solid ${s.color}" onclick="setSection('${s.sec}')">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:#555;letter-spacing:0.1em;margin-bottom:6px">${s.label.toUpperCase()}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:38px;color:${s.color};line-height:1">${s.value}</div>
+        </div>`).join("")}
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card">
+        <div class="section-title" style="color:#7EC89E">◉ Event Mendatang</div>
+        ${upcoming.map(e=>`
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #1A1A24">
+            <div>
+              <div style="font-size:13px;color:#E8E4DC">${e.title}</div>
+              <div style="font-family:'DM Mono',monospace;font-size:10px;color:#555;margin-top:2px">${new Date(e.date).toLocaleDateString("id-ID")}</div>
+            </div>
+            <span class="badge ${e.type==="kerja"?"tag-todo":"tag-tinggi"}">${e.type}</span>
+          </div>`).join("")}
+      </div>
+      <div class="card">
+        <div class="section-title" style="color:#C85050">◈ Prioritas Tinggi</div>
+        ${highPrio.length===0?'<div style="color:#444;font-size:13px">Semua tugas prioritas tinggi selesai! 🎉</div>':
+          highPrio.map(w=>`
+            <div style="padding:10px 0;border-bottom:1px solid #1A1A24">
+              <div style="font-size:13px;color:#E8E4DC">${w.title}</div>
+              <div style="display:flex;gap:8px;margin-top:4px;align-items:center">
+                <span class="badge tag-${w.status}">${w.status}</span>
+                ${w.due?`<span style="font-family:'DM Mono',monospace;font-size:9px;color:#555">Due: ${new Date(w.due).toLocaleDateString("id-ID")}</span>`:""}
+              </div>
+            </div>`).join("")}
+      </div>
+      <div class="card" style="grid-column:span 2">
+        <div class="section-title" style="color:#C8A97E">◐ Ringkasan Cepat</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          ${[{id:"work",label:"Pekerjaan"},{id:"business",label:"Bisnis"},{id:"family",label:"Keluarga"},{id:"data",label:"Data Penting"},{id:"credentials",label:"Kredensial"},{id:"plans",label:"Rencana"}].map(x=>`
+            <div style="background:#0D0D10;border:1px solid #1E1E28;border-radius:8px;padding:12px 18px;display:flex;gap:12px;align-items:center;cursor:pointer" onclick="setSection('${x.id}')">
+              <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#C8A97E">${DB[x.id].length}</div>
+              <div style="font-family:'DM Mono',monospace;font-size:10px;color:#666">${x.label.toUpperCase()}</div>
+            </div>`).join("")}
+        </div>
+      </div>
+    </div>`;
+}
+
+// WORK
+function renderWork(search) {
+  const items = DB.work.filter(w=>w.title.toLowerCase().includes(search));
+  return items.map(item=>`
+    <div class="item-row">
+      <div style="flex:1">
+        <div style="font-size:14px;color:#E8E4DC;margin-bottom:6px">${item.title}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span class="badge tag-${item.priority}">${item.priority}</span>
+          <span class="badge tag-${item.status}">${item.status}</span>
+          ${item.due?`<span style="font-family:'DM Mono',monospace;font-size:9px;color:#555">Due: ${new Date(item.due).toLocaleDateString("id-ID")}</span>`:""}
+        </div>
+        ${item.notes?`<div style="font-family:'DM Mono',monospace;font-size:11px;color:#555;margin-top:6px">${item.notes}</div>`:""}
+      </div>
+      <button class="btn btn-danger" data-del="work|${item.id}">Hapus</button>
+    </div>`).join("");
+}
+
+// BUSINESS
+function renderBusiness(search) {
+  const items = DB.business.filter(b=>b.title.toLowerCase().includes(search));
+  return items.map(item=>`
+    <div class="item-row">
+      <div style="flex:1">
+        <div style="font-size:14px;color:#E8E4DC;margin-bottom:6px">${item.title}</div>
+        <span class="badge tag-todo">${item.category}</span>
+        ${item.notes?`<div style="font-family:'DM Mono',monospace;font-size:11px;color:#555;margin-top:6px">${item.notes}</div>`:""}
+      </div>
+      <button class="btn btn-danger" data-del="business|${item.id}">Hapus</button>
+    </div>`).join("");
+}
+
+// FAMILY
+function renderFamily(search) {
+  const items = DB.family.filter(f=>f.name.toLowerCase().includes(search));
+  const colors = ["linear-gradient(135deg,#C87EA9,#C8A97E)","linear-gradient(135deg,#7E98C8,#7EC89E)","linear-gradient(135deg,#C8A97E,#C85050)"];
+  return items.map((item,i)=>`
+    <div class="item-row">
+      <div class="avatar" style="background:${colors[i%colors.length]}">${item.name[0]}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;color:#E8E4DC">${item.name}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:#666;margin-top:2px">${item.role}</div>
+        ${item.phone?`<div style="font-family:'DM Mono',monospace;font-size:11px;color:#555;margin-top:4px">${item.phone}</div>`:""}
+        ${item.notes?`<div style="font-family:'DM Mono',monospace;font-size:11px;color:#555;margin-top:2px">${item.notes}</div>`:""}
+      </div>
+      <button class="btn btn-danger" data-del="family|${item.id}">Hapus</button>
+    </div>`).join("");
+}
+
+// CALENDAR
+function renderCalendar(search) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const items = [...DB.calendar].filter(e=>e.title.toLowerCase().includes(search)).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  return items.map(item=>{
+    const d = new Date(item.date);
+    const past = d < today;
+    return `
+      <div class="item-row" style="opacity:${past?0.5:1}">
+        <div class="date-box">
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:#555">${d.toLocaleDateString("id-ID",{month:"short"}).toUpperCase()}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#7EC89E;line-height:1">${d.getDate()}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:9px;color:#555">${d.getFullYear()}</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:14px;color:#E8E4DC">${item.title}</div>
+          <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap">
+            <span class="badge ${item.type==="kerja"?"tag-todo":"tag-tinggi"}">${item.type}</span>
+            ${item.reminder?`<span class="badge" style="background:rgba(126,200,158,0.1);color:#7EC89E">🔔 Reminder</span>`:""}
+            ${past?`<span class="badge" style="background:rgba(80,80,80,0.2);color:#555">Lewat</span>`:""}
+          </div>
+        </div>
+        <button class="btn btn-danger" data-del="calendar|${item.id}">Hapus</button>
+      </div>`;}).join("");
+}
+
+// CONTACTS
+function renderContacts(search) {
+  const items = DB.contacts.filter(c=>c.name.toLowerCase().includes(search)||c.company?.toLowerCase().includes(search));
+  const colors = ["linear-gradient(135deg,#7E98C8,#7EB8C8)","linear-gradient(135deg,#C87EA9,#9E7EC8)","linear-gradient(135deg,#7EC89E,#7E98C8)"];
+  return items.map((item,i)=>`
+    <div class="item-row">
+      <div class="avatar" style="background:${colors[i%colors.length]}">${item.name[0]}</div>
+      <div style="flex:1">
+        <div style="font-size:14px;color:#E8E4DC">${item.name}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:#666">${item.role}${item.company?" · "+item.company:""}</div>
+        <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap">
+          ${item.phone?`<span style="font-family:'DM Mono',monospace;font-size:11px;color:#555">${item.phone}</span>`:""}
+          ${item.email?`<span style="font-family:'DM Mono',monospace;font-size:11px;color:#555">${item.email}</span>`:""}
+        </div>
+      </div>
+      <span class="badge tag-todo" style="margin-right:8px">${item.tag}</span>
+      <button class="btn btn-danger" data-del="contacts|${item.id}">Hapus</button>
+    </div>`).join("");
+}
+
+// CREDENTIALS
+function renderCredentials(search) {
+  const items = DB.credentials.filter(c=>c.service.toLowerCase().includes(search));
+  return `
+    <div class="warning">⚠ Data kredensial bersifat sensitif. Pastikan tidak ada yang melihat layar Anda.</div>
+    ${items.map(item=>`
+      <div class="item-row">
+        <div style="flex:1">
+          <div style="font-size:14px;color:#E8E4DC;margin-bottom:8px">${item.service}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:9px;color:#555;margin-bottom:2px">USERNAME</div>
+              <div style="font-family:'DM Mono',monospace;font-size:12px;color:#9E9E9E">${item.username}</div>
+            </div>
+            <div>
+              <div style="font-family:'DM Mono',monospace;font-size:9px;color:#555;margin-bottom:2px">PASSWORD</div>
+              <div style="font-family:'DM Mono',monospace;font-size:12px;color:#9E9E9E">${item.visible?item.password:"••••••••••"}</div>
+            </div>
+          </div>
+          ${item.notes?`<div style="font-family:'DM Mono',monospace;font-size:11px;color:#555;margin-top:6px">${item.notes}</div>`:""}
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-gold btn-sm" data-toggle="${item.id}">${item.visible?"Sembunyikan":"Tampilkan"}</button>
+          <button class="btn btn-danger" data-del="credentials|${item.id}">Hapus</button>
+        </div>
+      </div>`).join("")}`;
+}
+
+// DATA
+function renderData(search) {
+  const items = DB.data.filter(d=>d.title.toLowerCase().includes(search));
+  return `<div class="data-grid">${items.map(item=>`
+    <div class="card" style="position:relative">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:#555;letter-spacing:0.1em;margin-bottom:4px">${item.category?.toUpperCase()||""}</div>
+      <div style="font-size:14px;color:#E8E4DC;margin-bottom:6px">${item.title}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:13px;color:#C8A97E">${item.value}</div>
+      ${item.notes?`<div style="font-family:'DM Mono',monospace;font-size:10px;color:#555;margin-top:6px">${item.notes}</div>`:""}
+      <button class="btn btn-danger" style="position:absolute;top:12px;right:12px;padding:2px 8px;font-size:9px" data-del="data|${item.id}">×</button>
+    </div>`).join("")}</div>`;
+}
+
+// PLANS
+function renderPlans(search) {
+  const statusMap = {perencanaan:"tag-todo",riset:"tag-sedang","dalam-proses":"tag-proses",selesai:"tag-selesai"};
+  const items = DB.plans.filter(p=>p.title.toLowerCase().includes(search));
+  return items.map(item=>`
+    <div class="item-row" style="align-items:flex-start">
+      <div class="plan-bar"></div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div style="font-size:14px;color:#E8E4DC">${item.title}</div>
+          <span style="font-family:'DM Mono',monospace;font-size:10px;color:#7E98C8;margin-left:12px;white-space:nowrap">${item.phase}</span>
+        </div>
+        <div style="margin-top:6px"><span class="badge ${statusMap[item.status]||"tag-todo"}">${item.status}</span></div>
+        ${item.details?`<div style="font-family:'DM Mono',monospace;font-size:11px;color:#555;margin-top:6px">${item.details}</div>`:""}
+      </div>
+      <button class="btn btn-danger" data-del="plans|${item.id}">Hapus</button>
+    </div>`).join("");
+}
+
+// MODAL
+const FIELDS = {
+  work:[{k:"title",l:"Judul Tugas",t:"text"},{k:"priority",l:"Prioritas",t:"select",opts:["tinggi","sedang","rendah"]},{k:"status",l:"Status",t:"select",opts:["todo","proses","selesai"]},{k:"due",l:"Tenggat",t:"date"},{k:"notes",l:"Catatan",t:"textarea"}],
+  business:[{k:"title",l:"Judul",t:"text"},{k:"category",l:"Kategori",t:"text"},{k:"notes",l:"Catatan",t:"textarea"}],
+  family:[{k:"name",l:"Nama",t:"text"},{k:"role",l:"Peran",t:"text"},{k:"phone",l:"No. Telepon",t:"text"},{k:"notes",l:"Catatan",t:"textarea"}],
+  calendar:[{k:"title",l:"Judul Event",t:"text"},{k:"date",l:"Tanggal",t:"date"},{k:"type",l:"Tipe",t:"select",opts:["penting","kerja","keluarga","pribadi"]}],
+  contacts:[{k:"name",l:"Nama",t:"text"},{k:"role",l:"Jabatan",t:"text"},{k:"company",l:"Perusahaan",t:"text"},{k:"phone",l:"No. Telepon",t:"text"},{k:"email",l:"Email",t:"text"},{k:"tag",l:"Tag",t:"select",opts:["bisnis","pribadi","keluarga","pemerintah"]}],
+  credentials:[{k:"service",l:"Layanan / Platform",t:"text"},{k:"username",l:"Username / Email",t:"text"},{k:"password",l:"Password",t:"text"},{k:"notes",l:"Catatan",t:"textarea"}],
+  data:[{k:"title",l:"Nama Data",t:"text"},{k:"value",l:"Nilai / Nomor",t:"text"},{k:"category",l:"Kategori",t:"select",opts:["Identitas","Pajak","Keuangan","Properti","Kendaraan","Asuransi","Lainnya"]},{k:"notes",l:"Catatan",t:"textarea"}],
+  plans:[{k:"title",l:"Judul Rencana",t:"text"},{k:"phase",l:"Target Waktu",t:"text"},{k:"status",l:"Status",t:"select",opts:["perencanaan","riset","dalam-proses","selesai"]},{k:"details",l:"Detail",t:"textarea"}],
+};
+
+function openModal() {
+  const fields = FIELDS[active]||[];
+  document.getElementById("modal-title").textContent = "Tambah — "+SECTIONS.find(s=>s.id===active).label;
+  document.getElementById("modal-fields").innerHTML = fields.map(f=>`
+    <div class="form-group">
+      <div class="form-label">${f.l.toUpperCase()}</div>
+      ${f.t==="select"?`<select class="input" id="f_${f.k}"><option value="">Pilih...</option>${f.opts.map(o=>`<option value="${o}">${o}</option>`).join("")}</select>`:
+        f.t==="textarea"?`<textarea class="input" id="f_${f.k}"></textarea>`:
+        `<input class="input" type="${f.t}" id="f_${f.k}">`}
+    </div>`).join("");
+  document.getElementById("modal").classList.add("open");
+}
+
+function closeModal() { document.getElementById("modal").classList.remove("open"); }
+
+function saveItem() {
+  const fields = FIELDS[active]||[];
+  const item = { id: Date.now() };
+  fields.forEach(f => { item[f.k] = document.getElementById("f_"+f.k)?.value||""; });
+  DB[active] = [...(DB[active]||[]), item];
+  closeModal();
+  showToast("Item berhasil ditambahkan!");
+  renderActive();
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 2500);
+}
+
+// Init
+buildNav();
+renderActive();
+</script>
+</body>
+</html>
