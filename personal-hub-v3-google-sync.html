@@ -170,6 +170,7 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;font
 .btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(232,90,74,0.2);}
 .btn-danger:hover{background:rgba(232,90,74,0.2);}
 .btn-icon{width:30px;height:30px;padding:0;border-radius:7px;justify-content:center;font-size:14px;}
+:where(.btn,.topbar-btn,.topbar-toggle,.nav-rail-item,.nav-avatar,.sidebar-item,.ai-quick-btn,.ai-send,.sync-google-btn,.input,.ai-input):focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
 
 /* Input */
 .input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;outline:none;transition:var(--transition);}
@@ -264,6 +265,10 @@ textarea.input{resize:vertical;min-height:72px;line-height:1.5;}
   .modal{padding:20px;width:92vw;}
   .ob-card{width:92vw;padding:24px;}
   #toast{left:12px;right:12px;bottom:12px;}
+}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;}
 }
 
 /* Animations */
@@ -1215,6 +1220,7 @@ let USER = { name:'', role:'', initial:'U', color:'gold', links:{} };
 let ACTIVE = 'dashboard';
 let SIDEBAR_OPEN = true;
 let AI_OPEN = false;
+let SEARCH_TIMER = null;
 let VIEW_MODE = 'list'; // list | kanban | grid
 let MODAL_MODE = null; // add | edit
 let MODAL_EDIT_ID = null;
@@ -1446,6 +1452,12 @@ function init() {
   (DB.credentials || []).forEach(c => { c.visible = false; });
   const bd = document.getElementById('sidebar-backdrop');
   if (bd) bd.addEventListener('click', () => { if (window.innerWidth <= 768) closeSidebar(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('modal')?.classList.contains('open')) { closeModal(); return; }
+    if (AI_OPEN) { toggleAI(); return; }
+    if (window.innerWidth <= 768 && SIDEBAR_OPEN) { closeSidebar(); return; }
+  });
   window.addEventListener('resize', () => {
     if (window.innerWidth > 768) openSidebar();
     else updateSidebarBackdrop();
@@ -1596,8 +1608,12 @@ function toggleView() {
 }
 
 function handleSearch(val) {
-  renderContent(ACTIVE, val.toLowerCase());
-  renderSidebar(ACTIVE, val.toLowerCase());
+  const q = String(val || '').toLowerCase();
+  clearTimeout(SEARCH_TIMER);
+  SEARCH_TIMER = setTimeout(() => {
+    renderContent(ACTIVE, q);
+    renderSidebar(ACTIVE, q);
+  }, 120);
 }
 
 // ===== SIDEBAR =====
@@ -3202,12 +3218,6 @@ async function saveModal() {
   } else {
     DB[section] = DB[section].map(x=>{
       if (x.id !== MODAL_EDIT_ID) return x;
-      if (section === 'credentials' && !('passwordEnc' in item) && !('passwordIv' in item) && !('password' in item)) {
-        return { ...x, ...item };
-      }
-      if (section === 'credentials' && !('passwordEnc' in item) && !('passwordIv' in item) && !('password' in item)) {
-        return { ...x, ...item };
-      }
       return { ...x, ...item };
     });
     showToast('Data berhasil diperbarui!','success');
