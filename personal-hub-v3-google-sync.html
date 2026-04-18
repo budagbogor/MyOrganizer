@@ -36,6 +36,27 @@
   --nav-w: 68px;
   --sidebar-w: 260px;
   --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  color-scheme: dark;
+}
+:root[data-theme="light"]{
+  --bg: #F6F7FB;
+  --bg2: #FFFFFF;
+  --bg3: #F0F2F7;
+  --border: rgba(15,23,42,0.10);
+  --border2: rgba(15,23,42,0.16);
+  --gold-dim: rgba(212,168,83,0.22);
+  --gold-glow: rgba(212,168,83,0.14);
+  --blue-dim: rgba(74,158,232,0.16);
+  --green-dim: rgba(82,201,143,0.16);
+  --red-dim: rgba(232,90,74,0.14);
+  --purple-dim: rgba(155,127,232,0.16);
+  --pink-dim: rgba(232,122,170,0.16);
+  --text: #0F172A;
+  --text2: #334155;
+  --text3: #64748B;
+  --shadow: 0 10px 30px rgba(15,23,42,0.10);
+  --shadow-gold: 0 0 30px rgba(212,168,83,0.18);
+  color-scheme: light;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
@@ -784,7 +805,7 @@ function initGoogleSignIn() {
     client_id: GOOGLE_CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
     callback: handleGoogleToken,
-  }).requestAccessToken();
+  }).requestAccessToken({ prompt: 'consent' });
 }
 
 async function handleGoogleToken(tokenResponse) {
@@ -794,6 +815,8 @@ async function handleGoogleToken(tokenResponse) {
   }
   GSYNC.token = tokenResponse.access_token;
   GSYNC.tokenExpiry = Date.now() + (tokenResponse.expires_in * 1000);
+  GSYNC.connected = true;
+  GSYNC.hasConsent = true;
   closeGoogleAuth();
   showToast('Terhubung ke Google…', 'info');
   await fetchGoogleProfile();
@@ -802,6 +825,28 @@ async function handleGoogleToken(tokenResponse) {
   startAutoSync();
   updateSyncBar();
   saveGSync();
+}
+
+async function silentGoogleAuth() {
+  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com') return false;
+  if (typeof google === 'undefined') return false;
+  return new Promise((resolve) => {
+    try {
+      google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+        callback: (resp) => {
+          if (resp?.error) return resolve(false);
+          GSYNC.token = resp.access_token;
+          GSYNC.tokenExpiry = Date.now() + (resp.expires_in * 1000);
+          GSYNC.connected = true;
+          resolve(true);
+        },
+      }).requestAccessToken({ prompt: '' });
+    } catch {
+      resolve(false);
+    }
+  });
 }
 
 async function fetchGoogleProfile() {
@@ -891,8 +936,10 @@ async function gFetchText(url) {
 function handleTokenExpiry() {
   GSYNC.token = null;
   GSYNC.connected = false;
+  if (GSYNC.autoSyncTimer) clearInterval(GSYNC.autoSyncTimer);
   showToast('Sesi Google berakhir. Hubungkan ulang.', 'error');
   updateSyncBar();
+  saveGSync();
 }
 
 async function initDriveFolder() {
@@ -931,11 +978,15 @@ async function uploadToDrive(data) {
 
   if (GSYNC.driveFileId) {
     // Update existing
-    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${GSYNC.driveFileId}?uploadType=media`, {
+    const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${GSYNC.driveFileId}?uploadType=media`, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${GSYNC.token}`, 'Content-Type': 'application/json' },
       body: content,
     });
+    if (!res.ok) {
+      const msg = await res.text().catch(() => '');
+      throw new Error(`Upload gagal (${res.status})${msg ? `: ${msg}` : ''}`);
+    }
   } else {
     // Create new in folder
     const meta = { name: DRIVE_FILE_NAME, parents: [GSYNC.driveFolderId] };
@@ -947,6 +998,10 @@ async function uploadToDrive(data) {
       headers: { 'Authorization': `Bearer ${GSYNC.token}` },
       body: form,
     });
+    if (!res.ok) {
+      const msg = await res.text().catch(() => '');
+      throw new Error(`Upload gagal (${res.status})${msg ? `: ${msg}` : ''}`);
+    }
     const r = await res.json();
     GSYNC.driveFileId = r.id;
   }
@@ -982,6 +1037,7 @@ async function syncNow() {
       await initDriveFolder();
       await uploadToDrive({ USER, DB, syncedAt: new Date().toISOString() });
       GSYNC.lastSynced = new Date().toISOString();
+      GSYNC.lastSyncedLocal = GSYNC.lastSynced;
       addSyncLog('☁', 'Data pertama kali diunggah ke Google Drive');
       showToast('Data berhasil diunggah ke Google Drive!', 'success');
     } else {
@@ -990,7 +1046,7 @@ async function syncNow() {
       const driveModified = driveMeta?.modifiedTime ? new Date(driveMeta.modifiedTime) : null;
       const localModified = GSYNC.lastSyncedLocal ? new Date(GSYNC.lastSyncedLocal) : null;
 
-      if (driveModified && localModified && driveModified > localModified) {
+      if (driveModified && (!localModified || driveModified > localModified)) {
         // Drive is newer → show conflict
         const driveData = await downloadFromDrive();
         showConflictModal(driveData, driveModified, localModified);
@@ -1201,17 +1257,32 @@ function initGoogleSync() {
   loadGSync();
   updateSyncBar();
   if (GSYNC.connected && GSYNC.user) {
-    // Was connected before — try to re-auth silently (demo mode just continues)
     if (GSYNC.token?.startsWith('demo-token-')) {
       startAutoSync();
       showToast(`Selamat datang kembali, ${GSYNC.user.name?.split(' ')[0]}!`, 'success');
-    } else {
-      // Real mode: token is gone after page reload, need re-auth
-      GSYNC.connected = false;
-      GSYNC.token = null;
-      updateSyncBar();
-      showToast('Sesi Google berakhir. Hubungkan kembali di Pengaturan.', 'info');
+      return;
     }
+    if (GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com' && GSYNC.hasConsent) {
+      silentGoogleAuth().then(async (ok) => {
+        if (!ok) {
+          GSYNC.connected = false;
+          GSYNC.token = null;
+          updateSyncBar();
+          showToast('Sesi Google berakhir. Hubungkan kembali di Pengaturan.', 'info');
+          saveGSync();
+          return;
+        }
+        try { await initDriveFolder(); } catch {}
+        startAutoSync();
+        updateSyncBar();
+        saveGSync();
+      });
+      return;
+    }
+    GSYNC.connected = false;
+    GSYNC.token = null;
+    updateSyncBar();
+    showToast('Sesi Google berakhir. Hubungkan kembali di Pengaturan.', 'info');
   }
 }
 
@@ -1435,6 +1506,8 @@ let DB = {
 function ensureUserDefaults() {
   if (!USER || typeof USER !== 'object') USER = { name:'', role:'', initial:'U', color:'gold', links:{} };
   if (!USER.links || typeof USER.links !== 'object') USER.links = {};
+  if (!('theme' in USER)) USER.theme = 'dark';
+  if (!['dark','light'].includes(USER.theme)) USER.theme = 'dark';
   const l = USER.links;
   if (!('website' in l)) l.website = '';
   if (!('instagram' in l)) l.instagram = '';
@@ -1443,6 +1516,12 @@ function ensureUserDefaults() {
   if (!('tiktok' in l)) l.tiktok = '';
   if (!('x' in l)) l.x = '';
   if (!('whatsapp' in l)) l.whatsapp = '';
+}
+
+function applyTheme() {
+  ensureUserDefaults();
+  document.documentElement.dataset.theme = USER.theme;
+  document.documentElement.style.colorScheme = USER.theme === 'light' ? 'light' : 'dark';
 }
 
 function init() {
@@ -1468,6 +1547,7 @@ function init() {
     skipOnboarding();
   }
   ensureUserDefaults();
+  applyTheme();
   updateDateDisplay();
   setInterval(updateDateDisplay, 60000);
 }
@@ -1486,6 +1566,12 @@ function saveDB() {
     password: '',
   }));
   localStorage.setItem('phub_db', JSON.stringify({ ...DB, credentials: creds }));
+  GSYNC.lastSyncedLocal = new Date().toISOString();
+  clearTimeout(GSYNC._autoPushTimer);
+  GSYNC._autoPushTimer = setTimeout(() => {
+    if (GSYNC.connected && !GSYNC.isSyncing) syncNow();
+  }, 3000);
+  saveGSync();
 }
 function saveUser() { localStorage.setItem('phub_user', JSON.stringify(USER)); }
 
@@ -2658,7 +2744,9 @@ function renderNotes(search='') {
 
 // ===== SETTINGS =====
 function renderSettings() {
+  ensureUserDefaults();
   const l = USER.links || {};
+  const theme = USER.theme || 'dark';
   const links = {
     website: normalizeUrl(l.website),
     instagram: socialUrl('instagram', l.instagram),
@@ -2690,6 +2778,13 @@ function renderSettings() {
       </div>
       <div class="input-group"><label class="input-label">NAMA LENGKAP</label><input class="input" id="set-name" value="${USER.name}"></div>
       <div class="input-group"><label class="input-label">PERAN / JABATAN</label><input class="input" id="set-role" value="${USER.role}"></div>
+      <div class="input-group">
+        <label class="input-label">TEMA</label>
+        <select class="input" id="set-theme">
+          <option value="dark" ${theme==='dark'?'selected':''}>Gelap</option>
+          <option value="light" ${theme==='light'?'selected':''}>Terang</option>
+        </select>
+      </div>
       <button class="btn btn-primary" onclick="saveSettings()">Simpan Perubahan</button>
     </div>
     <div class="card" style="margin-bottom:16px">
@@ -2752,6 +2847,8 @@ function saveSettings() {
   USER.name = document.getElementById('set-name').value.trim() || USER.name;
   USER.role = document.getElementById('set-role').value.trim() || USER.role;
   ensureUserDefaults();
+  const t = document.getElementById('set-theme')?.value;
+  if (t === 'dark' || t === 'light') USER.theme = t;
   USER.links.website = document.getElementById('set-website')?.value.trim() || '';
   USER.links.whatsapp = document.getElementById('set-whatsapp')?.value.trim() || '';
   USER.links.instagram = document.getElementById('set-instagram')?.value.trim() || '';
@@ -2760,8 +2857,8 @@ function saveSettings() {
   USER.links.tiktok = document.getElementById('set-tiktok')?.value.trim() || '';
   USER.links.x = document.getElementById('set-x')?.value.trim() || '';
   USER.initial = USER.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-  saveUser(); updateProfile();
-  showToast('Profil diperbarui!','success');
+  saveUser(); applyTheme(); updateProfile();
+  showToast('Pengaturan disimpan!','success');
 }
 
 function normalizeUrl(u) {
