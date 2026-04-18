@@ -538,6 +538,9 @@ textarea.input{resize:vertical;min-height:72px;line-height:1.5;}
     <div class="nav-rail-item" data-section="plans" onclick="setSection('plans')">
       🎯<span class="tooltip">Rencana</span>
     </div>
+    <div class="nav-rail-item" data-section="notes" onclick="setSection('notes')">
+      📝<span class="tooltip">Catatan</span>
+    </div>
     <div class="nav-spacer"></div>
     <div class="nav-rail-item" onclick="toggleAI()" id="ai-rail-btn">
       🤖<span class="tooltip">AI Assistant</span>
@@ -1153,18 +1156,6 @@ function addSyncLog(icon, text) {
   if (GSYNC.syncLog.length > 30) GSYNC.syncLog.pop();
 }
 
-// ── Patch saveDB to trigger sync ──────────────────────────────
-const _origSaveDB = window.saveDB;
-function saveDB() {
-  localStorage.setItem('phub_db', JSON.stringify(DB));
-  GSYNC.lastSyncedLocal = new Date().toISOString();
-  // Debounced auto-push (3s after last change)
-  clearTimeout(window._dbSaveTimer);
-  window._dbSaveTimer = setTimeout(() => {
-    if (GSYNC.connected && !GSYNC.isSyncing) syncNow();
-  }, 3000);
-}
-
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ── Settings Section: Inject Sync Card ───────────────────────
@@ -1732,6 +1723,7 @@ function getSidebarItems(section, search='') {
          ['credentials','Kredensial',DB.credentials.length],
          ['data','Data Penting',DB.data.length],
          ['plans','Rencana',DB.plans.length],
+         ['notes','Catatan',DB.notes.length],
       ].map(([s,l,c])=>`
         <div class="sidebar-item" onclick="setSection('${s}')">
           <span class="si-label">${l}</span>
@@ -1870,7 +1862,7 @@ function getSidebarItems(section, search='') {
     family: () => `
       <div class="sidebar-group-label">RELASI</div>
       ${DB.family.map(f=>`
-        <div class="sidebar-item">
+        <div class="sidebar-item" onclick="editItem('family',${f.id})">
           <span class="si-dot"></span>
           <span class="si-label">${f.name}</span>
           <span class="si-count" style="font-size:10px;color:var(--text3)">${f.role}</span>
