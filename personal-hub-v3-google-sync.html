@@ -259,8 +259,13 @@ textarea.input{resize:vertical;min-height:72px;line-height:1.5;}
 .ob-sub{color:var(--text3);font-size:13px;margin-bottom:24px;line-height:1.6;}
 .ob-actions{display:flex;gap:10px;margin-top:24px;}
 
+.ph-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--grid-gap,14px);}
+.ph-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--grid-gap,12px);}
+.ph-grid-actions{display:grid;grid-template-columns:1fr auto auto;gap:var(--grid-gap,8px);align-items:center;}
+
 /* Responsive */
 @media(max-width:768px){
+  .ph-grid-3{grid-template-columns:repeat(2,minmax(0,1fr));}
   #nav-menu-btn{display:flex !important;}
   #sidebar{position:fixed;top:0;left:var(--nav-w);height:100%;z-index:40;box-shadow:var(--shadow);}
   #sidebar.hidden{width:var(--sidebar-w);border-right:1px solid var(--border);transform:translateX(calc(-100% - var(--nav-w)));}
@@ -270,6 +275,11 @@ textarea.input{resize:vertical;min-height:72px;line-height:1.5;}
   #ai-panel.open{position:fixed;right:0;top:0;height:100%;z-index:60;box-shadow:var(--shadow);}
   #topbar{padding:0 16px;}
   .nav-rail-item .tooltip{display:none;}
+}
+@media(max-width:600px){
+  .ph-grid-2,.ph-grid-3{grid-template-columns:1fr;}
+  .ph-grid-actions{grid-template-columns:1fr;}
+  .ph-grid-actions button{width:100%;justify-content:center;}
 }
 @media(max-width:480px){
   :root{--nav-w:56px;--sidebar-w:240px;}
@@ -1162,7 +1172,7 @@ const _origRenderSettings = window.renderSettings;
 function renderSettings() {
   const base = _origRenderSettings();
   const syncSection = `
-  <div class="card" style="margin-bottom:16px">
+  <div class="card" id="set-card-sync" style="margin-bottom:16px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div>
         <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:2px">SINKRONISASI GOOGLE</div>
@@ -1182,7 +1192,7 @@ function renderSettings() {
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+    <div class="ph-grid-3" style="--grid-gap:10px;margin-bottom:16px">
       <div style="text-align:center;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)">
         <div style="font-size:20px">☁</div>
         <div style="font-size:11px;font-weight:600;margin-top:4px">${GSYNC.lastSynced ? timeSince(new Date(GSYNC.lastSynced)) : 'Belum'}</div>
@@ -1867,8 +1877,14 @@ function getSidebarItems(section, search='') {
         </div>`).join('')}`,
     settings: () => `
       <div class="sidebar-group-label">PENGATURAN</div>
-      ${['Profil','Tema','Notifikasi','Data & Privasi','Tentang'].map(l=>`
-        <div class="sidebar-item">
+      ${[
+        ['profile','Profil'],
+        ['theme','Tema'],
+        ['notifications','Notifikasi'],
+        ['privacy','Data & Privasi'],
+        ['about','Tentang'],
+      ].map(([k,l])=>`
+        <div class="sidebar-item ${SETTINGS_SUB===k?'active':''}" onclick="settingsNav('${k}')">
           <span class="si-dot"></span>
           <span class="si-label">${l}</span>
         </div>`).join('')}`,
@@ -1900,6 +1916,22 @@ function filterDataCategory(cat) { dataCategoryFilter = cat || null; renderConte
 
 let plansStatusFilter = null;
 function filterPlansStatus(s) { plansStatusFilter = s || null; renderContent('plans',''); renderSidebar('plans',''); if (window.innerWidth <= 768) closeSidebar(); }
+
+let SETTINGS_SUB = 'profile';
+function settingsNav(key) {
+  SETTINGS_SUB = key;
+  renderSidebar('settings','');
+  if (window.innerWidth <= 768) closeSidebar();
+  if (key === 'notifications') { showToast('Notifikasi belum tersedia.', 'info'); return; }
+  if (key === 'about') { showToast('Personal Hub — v3 (Google Sync)', 'info'); return; }
+  const id = {
+    profile: 'set-card-profile',
+    theme: 'set-theme-anchor',
+    privacy: 'set-card-data',
+  }[key];
+  const el = id ? document.getElementById(id) : null;
+  if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+}
 
 // ===== CONTENT RENDERERS =====
 function renderContent(section, search='') {
@@ -2042,7 +2074,7 @@ function renderDashboard() {
   </div>
 
   <!-- Business & Plans row -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+  <div class="ph-grid-2" style="--grid-gap:16px;margin-bottom:20px">
     <div class="card">
       <div class="section-header">
         <div class="section-heading">💼 Bisnis Aktif</div>
@@ -2178,7 +2210,7 @@ function renderBusiness(search='') {
   const statusColors = {aktif:'b-green',pipeline:'b-blue',planning:'b-gold',selesai:'b-gray'};
   return `<div style="max-width:1200px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:20px">Agenda Bisnis</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" class="stagger">
+    <div class="ph-grid-2 stagger" style="--grid-gap:14px">
     ${items.map(item=>`
       <div class="card" style="position:relative" oncontextmenu="showCtx(event,'business',${item.id})">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
@@ -2599,7 +2631,7 @@ function renderCredentials(search='') {
             <div style="font-size:14px;font-weight:600">${escapeHtml(item.service)}</div>
             <span class="badge ${catColors[item.category]||'b-gray'}">${escapeHtml(item.category||'lainnya')}</span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="ph-grid-2" style="--grid-gap:10px">
             <div>
               <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:3px">USERNAME</div>
               <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2)">${escapeHtml(item.username)}</div>
@@ -2767,7 +2799,7 @@ function renderSettings() {
   ].filter(x => x[2]);
   return `<div style="max-width:900px;width:100%">
     <div style="font-family:'Playfair Display',serif;font-size:24px;margin-bottom:24px">Pengaturan & Profil</div>
-    <div class="card" style="margin-bottom:16px">
+    <div class="card" id="set-card-profile" style="margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:16px">PROFIL ANDA</div>
       <div style="display:flex;gap:16px;align-items:center;margin-bottom:16px">
         <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--blue));display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700">${USER.initial}</div>
@@ -2778,6 +2810,7 @@ function renderSettings() {
       </div>
       <div class="input-group"><label class="input-label">NAMA LENGKAP</label><input class="input" id="set-name" value="${USER.name}"></div>
       <div class="input-group"><label class="input-label">PERAN / JABATAN</label><input class="input" id="set-role" value="${USER.role}"></div>
+      <div id="set-theme-anchor"></div>
       <div class="input-group">
         <label class="input-label">TEMA</label>
         <select class="input" id="set-theme">
@@ -2787,9 +2820,9 @@ function renderSettings() {
       </div>
       <button class="btn btn-primary" onclick="saveSettings()">Simpan Perubahan</button>
     </div>
-    <div class="card" style="margin-bottom:16px">
+    <div class="card" id="set-card-links" style="margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:16px">KONEKSI ONLINE</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="ph-grid-2" style="--grid-gap:12px">
         <div class="input-group"><label class="input-label">WEBSITE</label><input class="input" id="set-website" value="${escapeHtml(l.website||'')}" placeholder="contoh: https://namasitus.com"></div>
         <div class="input-group"><label class="input-label">WHATSAPP</label><input class="input" id="set-whatsapp" value="${escapeHtml(l.whatsapp||'')}" placeholder="contoh: +62812..."></div>
         <div class="input-group"><label class="input-label">INSTAGRAM</label><input class="input" id="set-instagram" value="${escapeHtml(l.instagram||'')}" placeholder="contoh: @username atau url"></div>
@@ -2809,7 +2842,7 @@ function renderSettings() {
       ${quick.length?`
         <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
           <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:0.12em;margin-bottom:8px;text-transform:uppercase">Aksi Cepat</div>
-          <div style="display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center">
+          <div class="ph-grid-actions" style="--grid-gap:8px">
             ${quick.map(([k,label])=>`
               <div style="font-size:12px;color:var(--text2)">${label}</div>
               <button class="btn btn-ghost" style="padding:6px 10px;font-size:11px" onclick="quickAddCredential('${k}')">Simpan Login</button>
@@ -2819,9 +2852,9 @@ function renderSettings() {
         </div>`:''}
       <button class="btn btn-primary" style="margin-top:12px" onclick="saveSettings()">Simpan Koneksi</button>
     </div>
-    <div class="card" style="margin-bottom:16px">
+    <div class="card" id="set-card-stats" style="margin-bottom:16px">
       <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:16px">STATISTIK DATA</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+      <div class="ph-grid-3" style="--grid-gap:12px">
         ${[['Pekerjaan',DB.work.length,'⚡'],['Bisnis',DB.business.length,'💼'],['Keluarga',DB.family.length,'🏡'],['Event',DB.calendar.length,'📅'],['Kontak',DB.contacts.length,'👥'],['Rencana',DB.plans.length,'🎯']].map(([l,n,i])=>`
           <div style="text-align:center;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm)">
             <div>${i}</div>
@@ -2831,6 +2864,7 @@ function renderSettings() {
       </div>
     </div>
     <div class="card">
+      <div id="set-card-data"></div>
       <div style="font-size:13px;font-weight:700;color:var(--text3);letter-spacing:0.08em;margin-bottom:16px">MANAJEMEN DATA</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
         <button class="btn btn-ghost" onclick="exportData()">📤 Export Data (JSON)</button>
